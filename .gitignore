@@ -1,0 +1,134 @@
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# Editors / IDEs
+# =========================
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# JetBrains / Rider
+.idea/
+*.DotSettings.user
+
+# =========================
+# .NET
+# =========================
+bin/
+obj/
+[Bb]uild/
+[Aa]rtifacts/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# ASP.NET local settings / secrets
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# =========================
+# Node / TypeScript / React / Next.js
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+.cache/
+.turbo/
+
+# Package manager caches
+.npm/
+.yarn/cache/
+.pnpm-store/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Keep examples
+!.env.example
+
+# =========================
+# Android / Kotlin / Gradle
+# =========================
+.gradle/
+**/build/
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing / keystores
+*.jks
+*.keystore
+keystore.properties
+
+# =========================
+# Docker / local infrastructure
+# =========================
+docker-compose.override.yml
+compose.override.yml
+
+# Local volumes / generated infrastructure data
+docker-data/
+volumes/
+data/
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+
+# =========================
+# Temporary files
+# =========================
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# =========================
+# Certificates / secrets
+# =========================
+*.pfx
+*.p12
+*.pem
+*.key
+
+# =========================
+# Local tooling
+# =========================
+.coverage/
+coverage/
+reports/
