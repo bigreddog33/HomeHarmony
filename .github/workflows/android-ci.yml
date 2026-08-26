@@ -22,7 +22,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: android
+        working-directory: mobile
 
     steps:
       # 1. Download our repository onto GitHub's temporary computer.
