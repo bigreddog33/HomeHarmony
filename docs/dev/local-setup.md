@@ -26,9 +26,9 @@ The JavaScript/TypeScript will require the appropriate Node.js tooling as the we
 
 ## Android application
 
-For Android development, I will be using **Android Studio** together with the Android Jetpack ecosystem.
-
+For Android development, I will be using **Android Studio** together with the Android Jetpack ecosystem. The Android version is Pie.
 The Android development environment is intended to be fully usable from both development machines where possible.
+Debugging is done on a Pixel 8 physical device.
 
 ## Data storage
 
