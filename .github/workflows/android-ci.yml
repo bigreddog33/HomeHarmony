@@ -5,14 +5,14 @@ on:
     branches:
       - main
     paths:
-      - "android/**"
+      - "mobile/**"
       - ".github/workflows/android.yml"
 
   pull_request:
     branches:
       - main
     paths:
-      - "android/**"
+      - "mobile/**"
       - ".github/workflows/android.yml"
 
 jobs:
