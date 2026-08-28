@@ -9,35 +9,44 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = Indigo300,        // Vibrant Light Indigo for dark mode
+    secondary = Lilac300,      // Soft Lilac for dark mode
+    tertiary = Indigo400,
+    background = DeepSea900,    // Deep Sea Blue (Professional Dark)
+    surface = DeepSea800,       // Slightly lighter Deep Sea
+    onPrimary = DeepSea950,     // Deep Contrast on buttons
+    onSecondary = DeepSea950,
+    onBackground = Slate50,     // Soft white for text
+    onSurface = Slate100,
+    primaryContainer = Indigo900,
+    onPrimaryContainer = Indigo300,
+    outline = Slate300
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = Indigo700,        // Deep Indigo
+    secondary = Lilac700,      // Professional Purple
+    tertiary = Indigo600,
+    background = Slate50,       // Very light blue-grey background
+    surface = Color.White,
     onPrimary = Color.White,
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    onBackground = DeepSea900,
+    onSurface = DeepSea900,
+    primaryContainer = Indigo300,
+    onPrimaryContainer = Indigo900,
+    outline = Slate300
 )
 
 @Composable
 fun MyApplicationTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Set to false to ensure our professional palette is used consistently
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
