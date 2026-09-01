@@ -4,21 +4,80 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.myapplication.data.remote.ApiClient
+import com.example.myapplication.data.remote.auth.LoginRequest
+import kotlinx.coroutines.launch
+import java.io.IOException
 
 class LoginViewModel : ViewModel() {
 
     var uiState by mutableStateOf(LoginUiState())
         private set
 
-    fun onUsernameChange(username: String) {
-        uiState = uiState.copy(username = username)
+    fun onUsernameChange(Email: String) {
+        uiState = uiState.copy(Email = Email)
     }
 
-    fun onPasswordChange(password: String) {
-        uiState = uiState.copy(password = password)
+    fun onPasswordChange(Password: String) {
+        uiState = uiState.copy(Password = Password)
     }
 
     fun login() {
-        // API call will go here later
+        if (uiState.Email.isBlank() || uiState.Password.isBlank()) {
+            uiState = uiState.copy(
+                errorMessage = "Username and password are required."
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            uiState = uiState.copy(
+                isLoading = true,
+                errorMessage = null
+            )
+
+            try {
+                val response = ApiClient.authApi.login(
+                    LoginRequest(
+                        Email = uiState.Email,
+                        Password = uiState.Password
+                    )
+                )
+
+                when {
+                    response.isSuccessful -> {
+                        uiState = uiState.copy(
+                            isLoading = false,
+                            loginSucceeded = true
+                        )
+                    }
+
+                    response.code() == 401 -> {
+                        uiState = uiState.copy(
+                            isLoading = false,
+                            errorMessage = "Invalid username or password."
+                        )
+                    }
+
+                    else -> {
+                        uiState = uiState.copy(
+                            isLoading = false,
+                            errorMessage = "Something went wrong."
+                        )
+                    }
+                }
+            } catch (e: IOException) {
+                uiState = uiState.copy(
+                    isLoading = false,
+                    errorMessage = "Could not connect to the server."
+                )
+            } catch (e: Exception) {
+                uiState = uiState.copy(
+                    isLoading = false,
+                    errorMessage = "Unexpected error."
+                )
+            }
+        }
     }
 }

@@ -140,7 +140,7 @@ private fun LoginForm(
 
     Column(modifier = modifier) {
         OutlinedTextField(
-            value = state.username,
+            value = state.Email,
             onValueChange = viewModel::onUsernameChange,
             label = { Text(stringResource(R.string.login_username_label)) },
             modifier = Modifier.fillMaxWidth(),
@@ -155,7 +155,7 @@ private fun LoginForm(
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
-            value = state.password,
+            value = state.Password,
             onValueChange = viewModel::onPasswordChange,
             label = { Text(stringResource(R.string.login_password_label)) },
             modifier = Modifier.fillMaxWidth(),
@@ -176,6 +176,7 @@ private fun LoginForm(
         ) {
             Button(
                 onClick = viewModel::login,
+                enabled = !state.isLoading,
                 modifier = Modifier.weight(1f).height(50.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -183,11 +184,18 @@ private fun LoginForm(
                 ),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Text(
-                    stringResource(R.string.login_button), 
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
+                if (state.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        stringResource(R.string.login_button),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
             }
 
             OutlinedButton(
