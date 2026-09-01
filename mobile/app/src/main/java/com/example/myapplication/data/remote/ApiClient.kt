@@ -1,6 +1,6 @@
 package com.example.myapplication.data.remote
 
-import com.example.myapplication.data.remote.auth.AuthApi
+import com.example.myapplication.data.remote.account.AuthApi
 import com.example.myapplication.BuildConfig
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

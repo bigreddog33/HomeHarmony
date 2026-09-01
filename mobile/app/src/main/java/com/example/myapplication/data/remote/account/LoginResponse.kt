@@ -1,5 +1,5 @@
-package com.example.myapplication.data.remote.auth
+package com.example.myapplication.data.remote.account
 
 data class LoginResponse(
-    val token: String
+    val token: String? = null
 )

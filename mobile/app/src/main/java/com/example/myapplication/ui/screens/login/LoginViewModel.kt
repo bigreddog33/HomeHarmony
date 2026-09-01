@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.screens.login
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -68,15 +69,25 @@ class LoginViewModel : ViewModel() {
                     }
                 }
             } catch (e: IOException) {
+                Log.e("LOGIN_API", "Login request failed", e)
+
                 uiState = uiState.copy(
                     isLoading = false,
-                    errorMessage = "Could not connect to the server."
+                    errorMessage =
+                        "${e.javaClass.simpleName}: ${e.message}\n" +
+                                "Cause: ${e.cause?.javaClass?.simpleName}: ${e.cause?.message}"
                 )
+
             } catch (e: Exception) {
+                Log.e("LOGIN_API", "Login request failed", e)
+
                 uiState = uiState.copy(
                     isLoading = false,
-                    errorMessage = "Unexpected error."
+                    errorMessage =
+                        "${e.javaClass.simpleName}: ${e.message}\n" +
+                                "Cause: ${e.cause?.javaClass?.simpleName}: ${e.cause?.message}"
                 )
+
             }
         }
     }
