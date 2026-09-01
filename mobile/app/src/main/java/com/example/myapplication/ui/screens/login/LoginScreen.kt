@@ -1,7 +1,9 @@
-package com.example.myapplication.ui.screens
+package com.example.myapplication.ui.screens.login
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -14,23 +16,34 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
-import com.example.myapplication.ui.theme.MyApplicationTheme
 
 @Composable
 fun LoginScreen() {
+    val focusManager = LocalFocusManager.current
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        focusManager.clearFocus()
+                    }
+                )
+            }
     ) {
         LoginBackground()
 
@@ -38,19 +51,22 @@ fun LoginScreen() {
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 48.dp),
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            LoginHeader()
-            
-            Spacer(modifier = Modifier.height(16.dp)) // Impactful gap after the "Logo"
-            
-            LoginForm()
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            LoginFooter()
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 320.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                LoginHeader()
+                Spacer(modifier = Modifier.height(16.dp))
+                LoginForm()
+                Spacer(modifier = Modifier.height(16.dp))
+                LoginFooter()
+            }
         }
     }
 }
@@ -117,13 +133,18 @@ private fun LoginHeader(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun LoginForm(modifier: Modifier = Modifier) {
+private fun LoginForm(
+    modifier: Modifier = Modifier,
+    viewModel: LoginViewModel = viewModel()){
+    val state = viewModel.uiState
+
     Column(modifier = modifier) {
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = state.username,
+            onValueChange = viewModel::onUsernameChange,
             label = { Text(stringResource(R.string.login_username_label)) },
             modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = MaterialTheme.colorScheme.outline
@@ -134,10 +155,12 @@ private fun LoginForm(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = state.password,
+            onValueChange = viewModel::onPasswordChange,
             label = { Text(stringResource(R.string.login_password_label)) },
             modifier = Modifier.fillMaxWidth(),
+            visualTransformation = PasswordVisualTransformation(),
+            singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = MaterialTheme.colorScheme.outline
@@ -145,14 +168,14 @@ private fun LoginForm(modifier: Modifier = Modifier) {
             shape = MaterialTheme.shapes.medium
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Button(
-                onClick = {},
+                onClick = viewModel::login,
                 modifier = Modifier.weight(1f).height(50.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -170,7 +193,7 @@ private fun LoginForm(modifier: Modifier = Modifier) {
             OutlinedButton(
                 onClick = {},
                 modifier = Modifier.weight(1.2f).height(50.dp),
-                border = androidx.compose.foundation.BorderStroke(
+                border = BorderStroke(
                     1.5.dp,
                     MaterialTheme.colorScheme.primary
                 ),
@@ -222,6 +245,7 @@ private fun LoginFooter(modifier: Modifier = Modifier) {
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
+
                 Text(
                     text = stringResource(R.string.login_policies_terms),
                     color = MaterialTheme.colorScheme.primary,
@@ -230,21 +254,5 @@ private fun LoginFooter(modifier: Modifier = Modifier) {
                 )
             }
         }
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun LoginScreenPreview() {
-    MyApplicationTheme(darkTheme = false) {
-        LoginScreen()
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun LoginScreenDarkPreview() {
-    MyApplicationTheme(darkTheme = true) {
-        LoginScreen()
     }
 }
