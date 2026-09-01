@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -28,6 +29,7 @@ fun AppNavigation() {
         }
 
         composable("home") {
+            Log.d("LOGIN_FLOW", "HOME COMPOSED")
             HomeScreen()
         }
     }

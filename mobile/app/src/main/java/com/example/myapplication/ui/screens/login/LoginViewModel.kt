@@ -51,7 +51,6 @@ class LoginViewModel : ViewModel() {
                         uiState = uiState.copy(
                             isLoading = false
                         )
-
                         onSuccess()
                     }
 

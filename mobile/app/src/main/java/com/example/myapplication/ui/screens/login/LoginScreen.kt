@@ -33,7 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit = {},
+fun LoginScreen(onLoginSuccess: () -> Unit,
                 viewModel: LoginViewModel = viewModel()) {
     val state = viewModel.uiState
     val focusManager = LocalFocusManager.current
@@ -89,7 +89,11 @@ fun LoginScreen(onLoginSuccess: () -> Unit = {},
                             focusManager.clearFocus()
 
                             viewModel.login {
+                                Log.d("LOGIN_FLOW", "LoginScreen received success")
+
                                 onLoginSuccess()
+
+                                Log.d("LOGIN_FLOW", "LoginScreen called onLoginSuccess")
                             }
                         })
                     Spacer(modifier = Modifier.height(16.dp))

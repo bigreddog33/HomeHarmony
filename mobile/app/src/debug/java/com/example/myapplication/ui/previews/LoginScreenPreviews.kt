@@ -8,6 +8,6 @@ import com.example.myapplication.ui.theme.MyApplicationTheme
 @Composable
 fun LoginScreenPreview() {
     MyApplicationTheme {
-        LoginScreen()
+        LoginScreen(onLoginSuccess = {})
     }
 }
