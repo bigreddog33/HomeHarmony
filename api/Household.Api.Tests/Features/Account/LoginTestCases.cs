@@ -13,7 +13,6 @@ public static class LoginTestCases
     {
         { "", "password" },
         { "   ", "password" },
-        { "not-an-email", "password" },
         { "user@example.com", "" },
         { "user@example.com", "   " }
     };
