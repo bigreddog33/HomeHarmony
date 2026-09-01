@@ -1,6 +1,5 @@
 package com.example.myapplication.ui.screens.login
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,6 +34,7 @@ import com.example.myapplication.R
 @Composable
 fun LoginScreen(onLoginSuccess: () -> Unit,
                 viewModel: LoginViewModel = viewModel()) {
+
     val state = viewModel.uiState
     val focusManager = LocalFocusManager.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -89,11 +89,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit,
                             focusManager.clearFocus()
 
                             viewModel.login {
-                                Log.d("LOGIN_FLOW", "LoginScreen received success")
-
                                 onLoginSuccess()
-
-                                Log.d("LOGIN_FLOW", "LoginScreen called onLoginSuccess")
                             }
                         })
                     Spacer(modifier = Modifier.height(16.dp))
