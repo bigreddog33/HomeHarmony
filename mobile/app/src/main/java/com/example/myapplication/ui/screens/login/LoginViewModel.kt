@@ -24,7 +24,7 @@ class LoginViewModel : ViewModel() {
         uiState = uiState.copy(Password = Password)
     }
 
-    fun login() {
+    fun login(onSuccess: () -> Unit) {
         if (uiState.Email.isBlank() || uiState.Password.isBlank()) {
             uiState = uiState.copy(
                 errorMessage = "Username and password are required."
@@ -49,9 +49,10 @@ class LoginViewModel : ViewModel() {
                 when {
                     response.isSuccessful -> {
                         uiState = uiState.copy(
-                            isLoading = false,
-                            loginSucceeded = true
+                            isLoading = false
                         )
+
+                        onSuccess()
                     }
 
                     response.code() == 401 -> {

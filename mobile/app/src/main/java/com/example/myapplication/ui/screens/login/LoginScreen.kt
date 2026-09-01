@@ -1,5 +1,6 @@
 package com.example.myapplication.ui.screens.login
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -41,12 +42,6 @@ fun LoginScreen(onLoginSuccess: () -> Unit = {},
     LaunchedEffect(state.errorMessage) {
         state.errorMessage?.let {
             snackbarHostState.showSnackbar(it)
-        }
-    }
-
-    LaunchedEffect(state.loginSucceeded) {
-        if (state.loginSucceeded) {
-            onLoginSuccess()
         }
     }
 
@@ -92,7 +87,10 @@ fun LoginScreen(onLoginSuccess: () -> Unit = {},
                         onPasswordChange = viewModel::onPasswordChange,
                         onLoginClick = {
                             focusManager.clearFocus()
-                            viewModel.login()
+
+                            viewModel.login {
+                                onLoginSuccess()
+                            }
                         })
                     Spacer(modifier = Modifier.height(16.dp))
 
