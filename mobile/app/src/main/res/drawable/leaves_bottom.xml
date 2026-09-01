@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="220dp"
+    android:height="250dp"
+    android:viewportWidth="336"
+    android:viewportHeight="378">
+
+    <!-- Leaf body -->
+    <path
+        android:fillColor="@color/teal_200"
+        android:pathData="M228,8 C212,10 195,24 182,48 C168,72 160,97 154,118 C148,112 141,105 131,101 C119,97 108,100 101,110 C91,123 89,143 91,164 C81,156 69,151 58,154 C44,159 39,175 43,192 C48,211 60,229 77,244 C62,242 49,248 45,260 C40,275 49,292 64,307 C84,327 112,348 144,367 C175,371 206,359 236,341 C261,325 283,304 295,279 C301,265 298,250 287,244 C273,237 255,242 239,253 C252,237 269,216 283,191 C290,178 289,163 279,155 C265,145 245,150 226,164 C240,146 256,118 270,85 C277,68 279,53 272,44 C262,33 245,40 228,56 C236,34 237,17 228,8 Z" />
+
+    <!-- Main vein -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/teal_700"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M150,350 C150,328 158,294 160,265 C162,230 168,197 174,164 C186,125 199,89 217,60" />
+
+    <!-- Left veins -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/teal_700"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M153,307 C131,295 110,277 93,259" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/teal_700"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M158,262 C132,250 110,231 91,210" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/teal_700"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M162,219 C141,207 122,190 109,171" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/teal_700"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M169,175 C156,161 144,144 137,125" />
+
+    <!-- Right veins -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/teal_700"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M155,305 C185,291 212,273 237,242" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/teal_700"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M162,260 C190,246 219,227 246,203" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/teal_700"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M168,218 C194,204 220,185 243,163" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/teal_700"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M174,176 C201,164 223,148 240,119" />
+
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="@color/teal_700"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M184,136 C205,126 221,112 234,97" />
+
+</vector>

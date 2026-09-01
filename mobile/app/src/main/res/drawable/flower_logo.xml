@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="220dp"
+    android:height="220dp"
+    android:viewportWidth="220"
+    android:viewportHeight="220">
+
+    <!-- Petal 1 -->
+    <group
+        android:pivotX="110"
+        android:pivotY="110">
+        <path
+            android:fillColor="@color/purple_200"
+            android:fillAlpha="0.95"
+            android:pathData="M110,110 C86,94 71,74 72,50 C73,29 86,14 103,12 C106,12 108,13 110,16 C112,13 114,12 117,12 C134,14 147,29 148,50 C149,74 134,94 110,110 Z" />
+    </group>
+
+    <!-- Petal 2 -->
+    <group
+        android:pivotX="110"
+        android:pivotY="110"
+        android:rotation="72">
+        <path
+            android:fillColor="@color/purple_200"
+            android:fillAlpha="0.90"
+            android:pathData="M110,110 C86,94 71,74 72,50 C73,29 86,14 103,12 C106,12 108,13 110,16 C112,13 114,12 117,12 C134,14 147,29 148,50 C149,74 134,94 110,110 Z" />
+    </group>
+
+    <!-- Petal 3 -->
+    <group
+        android:pivotX="110"
+        android:pivotY="110"
+        android:rotation="144">
+        <path
+            android:fillColor="@color/purple_200"
+            android:fillAlpha="0.95"
+            android:pathData="M110,110 C86,94 71,74 72,50 C73,29 86,14 103,12 C106,12 108,13 110,16 C112,13 114,12 117,12 C134,14 147,29 148,50 C149,74 134,94 110,110 Z" />
+    </group>
+
+    <!-- Petal 4 -->
+    <group
+        android:pivotX="110"
+        android:pivotY="110"
+        android:rotation="216">
+        <path
+            android:fillColor="@color/purple_200"
+            android:fillAlpha="0.90"
+            android:pathData="M110,110 C86,94 71,74 72,50 C73,29 86,14 103,12 C106,12 108,13 110,16 C112,13 114,12 117,12 C134,14 147,29 148,50 C149,74 134,94 110,110 Z" />
+    </group>
+
+    <!-- Petal 5 -->
+    <group
+        android:pivotX="110"
+        android:pivotY="110"
+        android:rotation="288">
+        <path
+            android:fillColor="@color/purple_200"
+            android:fillAlpha="0.95"
+            android:pathData="M110,110 C86,94 71,74 72,50 C73,29 86,14 103,12 C106,12 108,13 110,16 C112,13 114,12 117,12 C134,14 147,29 148,50 C149,74 134,94 110,110 Z" />
+    </group>
+
+    <!-- Center -->
+    <path
+        android:fillColor="@color/purple_500"
+        android:pathData="M110,87 C122.7,87 133,97.3 133,110 C133,122.7 122.7,133 110,133 C97.3,133 87,122.7 87,110 C87,97.3 97.3,87 110,87 Z" />
+
+    <!-- White dots -->
+    <path
+        android:fillColor="@color/white"
+        android:pathData="
+            M100,97 C102.2,97 104,98.8 104,101 C104,103.2 102.2,105 100,105 C97.8,105 96,103.2 96,101 C96,98.8 97.8,97 100,97 Z
+            M113,94 C115.2,94 117,95.8 117,98 C117,100.2 115.2,102 113,102 C110.8,102 109,100.2 109,98 C109,95.8 110.8,94 113,94 Z
+            M122,103 C124.2,103 126,104.8 126,107 C126,109.2 124.2,111 122,111 C119.8,111 118,109.2 118,107 C118,104.8 119.8,103 122,103 Z
+            M98,110 C100.2,110 102,111.8 102,114 C102,116.2 100.2,118 98,118 C95.8,118 94,116.2 94,114 C94,111.8 95.8,110 98,110 Z
+            M110,108 C112.2,108 114,109.8 114,112 C114,114.2 112.2,116 110,116 C107.8,116 106,114.2 106,112 C106,109.8 107.8,108 110,108 Z
+            M121,116 C123.2,116 125,117.8 125,120 C125,122.2 123.2,124 121,124 C118.8,124 117,122.2 117,120 C117,117.8 118.8,116 121,116 Z
+            M103,121 C105.2,121 107,122.8 107,125 C107,127.2 105.2,129 103,129 C100.8,129 99,127.2 99,125 C99,122.8 100.8,121 103,121 Z
+            M114,122 C116.2,122 118,123.8 118,126 C118,128.2 116.2,130 114,130 C111.8,130 110,128.2 110,126 C110,123.8 111.8,122 114,122 Z" />
+
+</vector>
