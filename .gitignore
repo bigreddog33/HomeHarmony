@@ -101,7 +101,7 @@ compose.override.yml
 # Local volumes / generated infrastructure data
 docker-data/
 volumes/
-data/
+/data/
 
 # =========================
 # Logs
