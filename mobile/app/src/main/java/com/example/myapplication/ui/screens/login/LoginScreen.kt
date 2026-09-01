@@ -12,6 +12,8 @@ import androidx.compose.material.icons.outlined.LockReset
 import androidx.compose.material.icons.outlined.Policy
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -30,42 +32,72 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(onLoginSuccess: () -> Unit = {},
+                viewModel: LoginViewModel = viewModel()) {
+    val state = viewModel.uiState
     val focusManager = LocalFocusManager.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        focusManager.clearFocus()
-                    }
-                )
-            }
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+        }
+    }
+
+    LaunchedEffect(state.loginSucceeded) {
+        if (state.loginSucceeded) {
+            onLoginSuccess()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        }
     ) {
-        LoginBackground()
-
-        Column(
+        paddingValues ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
+                .pointerInput(Unit) {
+                    detectTapGestures {
+                        focusManager.clearFocus()
+                    }
+                }
         ) {
+            LoginBackground()
+
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = 320.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                LoginHeader()
-                Spacer(modifier = Modifier.height(16.dp))
-                LoginForm()
-                Spacer(modifier = Modifier.height(16.dp))
-                LoginFooter()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 320.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    LoginHeader()
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    LoginForm(
+                        state = state,
+                        onUsernameChange = viewModel::onUsernameChange,
+                        onPasswordChange = viewModel::onPasswordChange,
+                        onLoginClick = {
+                            focusManager.clearFocus()
+                            viewModel.login()
+                        })
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    LoginFooter()
+                }
             }
         }
     }
@@ -133,15 +165,15 @@ private fun LoginHeader(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun LoginForm(
-    modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = viewModel()){
-    val state = viewModel.uiState
-
+private fun LoginForm(state: LoginUiState,
+                      onUsernameChange: (String) -> Unit,
+                      onPasswordChange: (String) -> Unit,
+                      onLoginClick: () -> Unit,
+                      modifier: Modifier = Modifier ){
     Column(modifier = modifier) {
         OutlinedTextField(
             value = state.Email,
-            onValueChange = viewModel::onUsernameChange,
+            onValueChange = onUsernameChange,
             label = { Text(stringResource(R.string.login_username_label)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -156,7 +188,7 @@ private fun LoginForm(
 
         OutlinedTextField(
             value = state.Password,
-            onValueChange = viewModel::onPasswordChange,
+            onValueChange = onPasswordChange,
             label = { Text(stringResource(R.string.login_password_label)) },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
@@ -175,9 +207,11 @@ private fun LoginForm(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Button(
-                onClick = viewModel::login,
+                onClick = onLoginClick,
                 enabled = !state.isLoading,
-                modifier = Modifier.weight(1f).height(50.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
@@ -200,7 +234,9 @@ private fun LoginForm(
 
             OutlinedButton(
                 onClick = {},
-                modifier = Modifier.weight(1.2f).height(50.dp),
+                modifier = Modifier
+                    .weight(1.2f)
+                    .height(50.dp),
                 border = BorderStroke(
                     1.5.dp,
                     MaterialTheme.colorScheme.primary
