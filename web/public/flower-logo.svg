@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
+  <path fill="#bb86fc" fill-opacity=".95" d="M110 110C86 94 71 74 72 50c1-21 14-36 31-38 3 0 5 1 7 4 2-3 4-4 7-4 17 2 30 17 31 38 1 24-14 44-38 60Z"/>
+  <path fill="#bb86fc" fill-opacity=".9" transform="rotate(72 110 110)" d="M110 110C86 94 71 74 72 50c1-21 14-36 31-38 3 0 5 1 7 4 2-3 4-4 7-4 17 2 30 17 31 38 1 24-14 44-38 60Z"/>
+  <path fill="#bb86fc" fill-opacity=".95" transform="rotate(144 110 110)" d="M110 110C86 94 71 74 72 50c1-21 14-36 31-38 3 0 5 1 7 4 2-3 4-4 7-4 17 2 30 17 31 38 1 24-14 44-38 60Z"/>
+  <path fill="#bb86fc" fill-opacity=".9" transform="rotate(216 110 110)" d="M110 110C86 94 71 74 72 50c1-21 14-36 31-38 3 0 5 1 7 4 2-3 4-4 7-4 17 2 30 17 31 38 1 24-14 44-38 60Z"/>
+  <path fill="#bb86fc" fill-opacity=".95" transform="rotate(288 110 110)" d="M110 110C86 94 71 74 72 50c1-21 14-36 31-38 3 0 5 1 7 4 2-3 4-4 7-4 17 2 30 17 31 38 1 24-14 44-38 60Z"/>
+  <circle cx="110" cy="110" r="23" fill="#6200ee"/>
+  <g fill="#fff">
+    <circle cx="100" cy="101" r="4"/><circle cx="113" cy="98" r="4"/><circle cx="122" cy="107" r="4"/><circle cx="98" cy="114" r="4"/><circle cx="110" cy="112" r="4"/><circle cx="121" cy="120" r="4"/><circle cx="103" cy="125" r="4"/><circle cx="114" cy="126" r="4"/>
+  </g>
+</svg>
