@@ -1,65 +1,82 @@
 package com.example.myapplication.ui.screens.login
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.LockReset
-import androidx.compose.material.icons.outlined.Policy
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.R
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
 
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit,
-                viewModel: LoginViewModel = viewModel()) {
-
+fun LoginScreen(
+    onLoginSuccess: () -> Unit,
+    viewModel: LoginViewModel = viewModel()
+) {
     val state = viewModel.uiState
     val focusManager = LocalFocusManager.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarMessage = state.snackbarMessage?.let { stringResource(it) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val currentOnLoginSuccess by rememberUpdatedState(onLoginSuccess)
 
-    LaunchedEffect(state.errorMessage) {
-        state.errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
+    LaunchedEffect(viewModel, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            snapshotFlow { viewModel.uiState.isLoginSuccessful }
+                .filter { it }
+                .collect { currentOnLoginSuccess() }
         }
     }
 
-    Scaffold(
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
+    LaunchedEffect(snackbarMessage) {
+        snackbarMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.onSnackbarShown()
         }
-    ) {
-        paddingValues ->
+    }
+
+    Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
+                .consumeWindowInsets(paddingValues)
+                .imePadding()
                 .pointerInput(Unit) {
-                    detectTapGestures {
-                        focusManager.clearFocus()
-                    }
+                    detectTapGestures { focusManager.clearFocus() }
                 }
         ) {
             LoginBackground()
@@ -68,32 +85,26 @@ fun LoginScreen(onLoginSuccess: () -> Unit,
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 24.dp, vertical = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .widthIn(max = 320.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .widthIn(max = 420.dp)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     LoginHeader()
-                    Spacer(modifier = Modifier.height(16.dp))
-
                     LoginForm(
                         state = state,
-                        onUsernameChange = viewModel::onUsernameChange,
+                        onEmailChange = viewModel::onEmailChange,
                         onPasswordChange = viewModel::onPasswordChange,
                         onLoginClick = {
                             focusManager.clearFocus()
-
-                            viewModel.login {
-                                onLoginSuccess()
-                            }
-                        })
-                    Spacer(modifier = Modifier.height(16.dp))
-
+                            viewModel.login()
+                        }
+                    )
                     LoginFooter()
                 }
             }
@@ -103,8 +114,8 @@ fun LoginScreen(onLoginSuccess: () -> Unit,
 
 @Composable
 private fun LoginBackground() {
-    val isDark = !MaterialTheme.colorScheme.surface.let { it.red > 0.5f && it.green > 0.5f } 
-    val decorationAlpha = if (isDark) 0.6f else 1f
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val decorationAlpha = if (isDark) 0.2f else 0.35f
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -113,9 +124,10 @@ private fun LoginBackground() {
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .fillMaxWidth(1f)
+                .widthIn(max = 520.dp)
+                .fillMaxWidth()
                 .aspectRatio(1f)
-                .offset(x = 85.dp, y = (-30).dp)
+                .offset(x = 100.dp, y = (-60).dp)
                 .rotate(130f)
                 .alpha(decorationAlpha)
         )
@@ -126,9 +138,10 @@ private fun LoginBackground() {
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .fillMaxWidth(1f)
+                .widthIn(max = 520.dp)
+                .fillMaxWidth()
                 .aspectRatio(1f)
-                .offset(x = (-120).dp, y = 60.dp)
+                .offset(x = (-120).dp, y = 100.dp)
                 .rotate(-30f)
                 .alpha(decorationAlpha)
         )
@@ -136,165 +149,132 @@ private fun LoginBackground() {
 }
 
 @Composable
-private fun LoginHeader(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy((-20).dp) // Modern "overlap" style
-    ) {
+private fun LoginHeader() {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = stringResource(R.string.login_welcome),
-            fontSize = 58.sp, // Big and bold
-            lineHeight = 58.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = (-2).sp,
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary
         )
-
         Text(
-            text = stringResource(R.string.login_home),
-            fontSize = 48.sp, // Large but light contrast
-            lineHeight = 48.sp,
-            fontWeight = FontWeight.Light,
-            letterSpacing = 6.sp, // Wide letter spacing for elegance
-            color = MaterialTheme.colorScheme.secondary
+            text = stringResource(R.string.login_subtitle),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
 @Composable
-private fun LoginForm(state: LoginUiState,
-                      onUsernameChange: (String) -> Unit,
-                      onPasswordChange: (String) -> Unit,
-                      onLoginClick: () -> Unit,
-                      modifier: Modifier = Modifier ){
-    Column(modifier = modifier) {
+private fun LoginForm(
+    state: LoginUiState,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onLoginClick: () -> Unit
+) {
+    val focusManager = LocalFocusManager.current
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(
-            value = state.Email,
-            onValueChange = onUsernameChange,
-            label = { Text(stringResource(R.string.login_username_label)) },
+            value = state.email,
+            onValueChange = onEmailChange,
+            label = { Text(stringResource(R.string.login_email_label)) },
             modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading,
+            isError = state.emailError != null,
+            supportingText = state.emailError?.let { error ->
+                { Text(stringResource(error)) }
+            },
             singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
             ),
             shape = MaterialTheme.shapes.medium
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
-
         OutlinedTextField(
-            value = state.Password,
+            value = state.password,
             onValueChange = onPasswordChange,
             label = { Text(stringResource(R.string.login_password_label)) },
             modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading,
+            isError = state.passwordError != null,
+            supportingText = state.passwordError?.let { error ->
+                { Text(stringResource(error)) }
+            },
             visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
             ),
+            keyboardActions = KeyboardActions(onDone = { onLoginClick() }),
             shape = MaterialTheme.shapes.medium
         )
 
-        Spacer(modifier = Modifier.height(18.dp))
+        state.loginError?.let { error ->
+            Text(
+                text = stringResource(error),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+            )
+        }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Button(
+            onClick = onLoginClick,
+            enabled = !state.isLoading,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+            shape = MaterialTheme.shapes.medium
         ) {
-            Button(
-                onClick = onLoginClick,
-                enabled = !state.isLoading,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(
-                        stringResource(R.string.login_button),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
-            }
-
-            OutlinedButton(
-                onClick = {},
-                modifier = Modifier
-                    .weight(1.2f)
-                    .height(50.dp),
-                border = BorderStroke(
-                    1.5.dp,
-                    MaterialTheme.colorScheme.primary
-                ),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Text(
-                    text = stringResource(R.string.login_create_user),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 16.sp
+            if (state.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = LocalContentColor.current,
+                    strokeWidth = 2.dp
                 )
+                Spacer(modifier = Modifier.width(8.dp))
             }
+            Text(
+                text = stringResource(
+                    if (state.isLoading) R.string.login_loading else R.string.login_button
+                ),
+                style = MaterialTheme.typography.titleSmall
+            )
+        }
+
+        OutlinedButton(
+            onClick = {},
+            enabled = !state.isLoading,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Text(
+                text = stringResource(R.string.login_create_user),
+                style = MaterialTheme.typography.titleSmall
+            )
         }
     }
 }
 
 @Composable
-private fun LoginFooter(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+private fun LoginFooter() {
+    Column {
         TextButton(onClick = {}) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.LockReset,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.secondary
-                )
-                Text(
-                    text = stringResource(R.string.login_forgot_password),
-                    color = MaterialTheme.colorScheme.secondary,
-                    textDecoration = TextDecoration.Underline,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            Text(stringResource(R.string.login_forgot_password))
         }
-
         TextButton(onClick = {}) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Policy,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-
-                Text(
-                    text = stringResource(R.string.login_policies_terms),
-                    color = MaterialTheme.colorScheme.primary,
-                    textDecoration = TextDecoration.Underline,
-                    fontWeight = FontWeight.Medium
-                )
-            }
+            Text(
+                text = stringResource(R.string.login_policies_terms),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

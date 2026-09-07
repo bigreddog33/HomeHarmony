@@ -4,5 +4,5 @@ namespace Household.Api.Features.Account.Services;
 
 public interface IAccountService
 {
-    Task<LoginResponse?> LoginAsync(LoginRequest request, CancellationToken cancellationToken);
+    Task<bool> LoginAsync(LoginRequest request, CancellationToken cancellationToken);
 }

@@ -20,6 +20,13 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Unit tests
+
+Run `npm test` for a single run, or `npm run test:watch` while editing. The Vitest
+tests cover login validation and API outcomes in Node, without a browser or a
+running API. Vite 6 keeps the test runner compatible with the current Node 20
+development environment; CI uses Node 22.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

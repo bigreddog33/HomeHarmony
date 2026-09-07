@@ -2,37 +2,24 @@
 
 import type { ChangeEvent, FocusEvent, SubmitEvent } from "react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import type { LoginRequest } from "@/contracts/auth/LoginRequest";
 import { login, LoginApiError } from "@/services/auth/login";
 import Toast from "@/components/feedback/Toast";
 import FormInput from "./FormInput";
 import PasswordInput from "./PasswordInput";
-
-type FieldName = keyof LoginRequest;
-type FieldErrors = Partial<Record<FieldName, string>>;
+import {
+  validateLogin,
+  validateLoginField,
+  type LoginField,
+  type LoginFieldErrors,
+} from "./loginValidation";
 
 const initialValues: LoginRequest = {
   email: "",
   password: "",
 };
-
-function validateField(field: FieldName, value: string): string | undefined {
-  if (!value.trim()) {
-    return field === "email" ? "Email is required." : "Password is required.";
-  }
-
-  if (field === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-    return "Enter a valid email address.";
-  }
-}
-
-function validate(values: LoginRequest): FieldErrors {
-  return {
-    email: validateField("email", values.email),
-    password: validateField("password", values.password),
-  };
-}
 
 function getToastMessage(error: LoginApiError): string {
   switch (error.failure) {
@@ -48,13 +35,13 @@ function getToastMessage(error: LoginApiError): string {
 export default function LoginForm() {
   const router = useRouter();
   const [values, setValues] = useState<LoginRequest>(initialValues);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   const [credentialsError, setCredentialsError] = useState<string>();
   const [toastMessage, setToastMessage] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    const field = event.currentTarget.name as FieldName;
+    const field = event.currentTarget.name as LoginField;
     const value = event.currentTarget.value;
 
     setValues((current) => ({ ...current, [field]: value }));
@@ -63,8 +50,8 @@ export default function LoginForm() {
   }
 
   function handleBlur(event: FocusEvent<HTMLInputElement>) {
-    const field = event.currentTarget.name as FieldName;
-    const error = validateField(field, event.currentTarget.value);
+    const field = event.currentTarget.name as LoginField;
+    const error = validateLoginField(field, event.currentTarget.value);
 
     setFieldErrors((current) => ({ ...current, [field]: error }));
   }
@@ -72,12 +59,12 @@ export default function LoginForm() {
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const errors = validate(values);
+    const errors = validateLogin(values);
     setFieldErrors(errors);
     setCredentialsError(undefined);
     setToastMessage(undefined);
 
-    const firstInvalidField = (Object.keys(errors) as FieldName[]).find(
+    const firstInvalidField = (Object.keys(errors) as LoginField[]).find(
       (field) => errors[field],
     );
 
@@ -118,9 +105,11 @@ export default function LoginForm() {
 
   return (
     <>
-      {toastMessage && (
-        <Toast message={toastMessage} onClose={() => setToastMessage(undefined)} />
-      )}
+      {toastMessage &&
+        createPortal(
+          <Toast message={toastMessage} onClose={() => setToastMessage(undefined)} />,
+          document.body,
+        )}
 
       <form
         onSubmit={handleSubmit}

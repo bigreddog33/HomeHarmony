@@ -1,6 +1,6 @@
-package com.example.myapplication.data.remote.auth
+package com.example.myapplication.data.remote.account
 
 data class LoginRequest(
-    val Email: String,
-    val Password: String
+    val email: String,
+    val password: String
 )
