@@ -1,15 +1,7 @@
-"use client";
-
-import type { FormEvent } from "react";
 import Image from "next/image";
-import FormInput from "@/components/forms/FormInput";
-import PasswordInput from "@/components/forms/PasswordInput";
+import LoginForm from "@/components/forms/LoginForm";
 
 export default function LoginPage() {
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-  }
-
   return (
     <main className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-5 py-8 sm:px-8 lg:px-12">
       <div className="pointer-events-none absolute -right-28 -top-32 -z-10 h-[34rem] w-[34rem] rotate-[22deg] opacity-25 lg:-right-16 lg:-top-40 lg:h-[44rem] lg:w-[44rem]">
@@ -141,42 +133,7 @@ export default function LoginPage() {
               </p>
             </header>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <FormInput
-                id="email"
-                name="email"
-                type="email"
-                label="Email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                required
-              />
-
-              <PasswordInput />
-
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className="rounded text-sm font-medium text-purple-700 underline-offset-4 transition hover:text-purple-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-4"
-                >
-                  Forgot password?
-                </button>
-              </div>
-
-              <button
-                type="submit"
-                className="h-13 w-full rounded-xl bg-indigo-800 px-5 text-base font-bold text-white shadow-lg shadow-indigo-900/15 transition hover:bg-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-4 active:translate-y-px"
-              >
-                Login
-              </button>
-
-              <button
-                type="button"
-                className="h-13 w-full rounded-xl border-2 border-indigo-800 bg-white px-5 text-base font-semibold text-indigo-800 transition hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-4 active:translate-y-px"
-              >
-                Create user
-              </button>
-            </form>
+            <LoginForm />
 
             <div className="mt-8 border-t border-slate-200 pt-6 text-center">
               <button

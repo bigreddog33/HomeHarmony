@@ -1,9 +1,24 @@
 "use client";
 
+import type { ChangeEventHandler, FocusEventHandler } from "react";
 import { useState } from "react";
 import FormInput from "./FormInput";
 
-export default function PasswordInput() {
+type PasswordInputProps = {
+  value: string;
+  onChange: ChangeEventHandler<HTMLInputElement>;
+  onBlur: FocusEventHandler<HTMLInputElement>;
+  error?: string;
+  disabled?: boolean;
+};
+
+export default function PasswordInput({
+  value,
+  onChange,
+  onBlur,
+  error,
+  disabled,
+}: PasswordInputProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
@@ -14,13 +29,18 @@ export default function PasswordInput() {
         type={isVisible ? "text" : "password"}
         label="Password"
         autoComplete="current-password"
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+        error={error}
+        disabled={disabled}
         className="pr-12"
-        required
       />
       <button
         type="button"
         onClick={() => setIsVisible((current) => !current)}
-        className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+        disabled={disabled}
+        className="absolute right-2 top-7 grid h-9 w-9 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={isVisible ? "Hide password" : "Show password"}
         aria-pressed={isVisible}
       >
