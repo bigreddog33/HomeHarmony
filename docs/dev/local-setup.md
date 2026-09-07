@@ -30,30 +30,6 @@ For Android development, I will be using **Android Studio** together with the An
 The Android development environment is intended to be fully usable from both development machines where possible.
 Debugging is done on a Pixel 8 physical device.
 
-### Android API environments
-
-The `debug` build allows HTTP for local testing. Its default API URL is
-`http://127.0.0.1:5193/`; on a USB-connected phone, use `adb reverse tcp:5193 tcp:5193`
-to forward that address to the development computer. For Wi-Fi testing, override
-`DEBUG_API_BASE_URL` with the computer's reachable LAN address.
-
-The `release` build blocks HTTP and uses a separate `RELEASE_API_BASE_URL`, which
-must use HTTPS. Until the deployment address is known, the default is
-`https://api.homeharmony.invalid/`, an intentionally non-working placeholder that
-allows CI to compile release builds. Set the real address before distributing an APK.
-
-Both URLs must end with `/`. Configure them through Gradle project properties,
-for example in your user-level `~/.gradle/gradle.properties`:
-
-```properties
-DEBUG_API_BASE_URL=http://192.168.1.50:5193/
-RELEASE_API_BASE_URL=https://your-api.example.com/
-```
-
-They can also be passed with `-PDEBUG_API_BASE_URL=...` or
-`-PRELEASE_API_BASE_URL=...` when invoking Gradle. These are build-time settings;
-rebuild the app after changing them. The release example above is not a deployed service.
-
 ## Data storage
 
 The main database for the project will be **SQL Server**.

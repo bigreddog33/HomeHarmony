@@ -22,7 +22,7 @@ public sealed class AccountControllerTests
     }
 
     [Theory]
-    [MemberData(nameof(LoginTestCases.InvalidCredentials), MemberType = typeof(LoginTestCases))]
+    [ClassData(typeof(LoginTestCases.InvalidCredentials))]
     public async Task Login_WithInvalidCredentials_ReturnsUnauthorized(string email, string password)
     {
         var request = new LoginRequest(email, password);

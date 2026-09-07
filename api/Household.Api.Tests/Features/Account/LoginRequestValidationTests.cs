@@ -7,7 +7,7 @@ namespace Household.Api.Tests.Features.Account;
 public sealed class LoginRequestValidationTests
 {
     [Theory]
-    [MemberData(nameof(LoginTestCases.InvalidRequests), MemberType = typeof(LoginTestCases))]
+    [ClassData(typeof(LoginTestCases.InvalidRequests))]
     public void LoginRequest_WithMissingInput_IsInvalid(string email, string password)
     {
         var request = new LoginRequest(email, password);
@@ -18,11 +18,7 @@ public sealed class LoginRequestValidationTests
     }
 
     [Theory]
-    [InlineData("not-an-email")]
-    [InlineData("user.example.com")]
-    [InlineData("@example.com")]
-    [InlineData("user@")]
-    [InlineData("user@@example.com")]
+    [ClassData(typeof(LoginTestCases.InvalidEmails))]
     public void LoginRequest_WithInvalidEmail_IsInvalid(string email)
     {
         var request = new LoginRequest(email, "password");
@@ -33,8 +29,7 @@ public sealed class LoginRequestValidationTests
     }
 
     [Theory]
-    [InlineData(null, "password")]
-    [InlineData("user@example.com", null)]
+    [ClassData(typeof(LoginTestCases.NullRequests))]
     public void LoginRequest_WithNullInput_IsInvalid(string? email, string? password)
     {
         var request = new LoginRequest(email!, password!);
@@ -45,9 +40,7 @@ public sealed class LoginRequestValidationTests
     }
 
     [Theory]
-    [InlineData("user@example.com", "x")]
-    [InlineData("demo@homeharmony.local", "password")]
-    [InlineData("user+home@example.com", "123")]
+    [ClassData(typeof(LoginTestCases.ValidRequests))]
     public void LoginRequest_WithValidEmailAndNonEmptyPassword_IsValid(string email, string password)
     {
         var request = new LoginRequest(email, password);

@@ -8,8 +8,7 @@ public sealed class MockAccountServiceTests
     private readonly MockAccountService _accountService = new();
 
     [Theory]
-    [InlineData("demo@homeharmony.local")]
-    [InlineData("DEMO@HOMEHARMONY.LOCAL")]
+    [ClassData(typeof(LoginTestCases.DemoEmails))]
     public async Task LoginAsync_WithDemoCredentials_ReturnsTrue(string email)
     {
         var request = new LoginRequest(email, "Password123!");
@@ -20,7 +19,7 @@ public sealed class MockAccountServiceTests
     }
 
     [Theory]
-    [MemberData(nameof(LoginTestCases.InvalidCredentials), MemberType = typeof(LoginTestCases))]
+    [ClassData(typeof(LoginTestCases.InvalidCredentials))]
     public async Task LoginAsync_WithInvalidCredentials_ReturnsFalse(string email, string password)
     {
         var request = new LoginRequest(email, password);
