@@ -11,16 +11,15 @@ public sealed class AccountController(IAccountService accountService) : Controll
 {
     [AllowAnonymous]
     [HttpPost("login")]
-    
-    [ProducesResponseType<LoginResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<LoginResponse>> Login(
+    public async Task<IActionResult> Login(
         LoginRequest request,
         CancellationToken cancellationToken)
     {
-        var response = await accountService.LoginAsync(request, cancellationToken);
+        var isValid = await accountService.LoginAsync(request, cancellationToken);
 
-        return response is null ? Unauthorized() : Ok(response);
+        return isValid ? Ok() : Unauthorized();
     }
 }

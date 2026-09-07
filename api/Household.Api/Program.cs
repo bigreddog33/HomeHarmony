@@ -3,6 +3,7 @@ using Household.Api.Features.Account.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddScoped<IAccountService, MockAccountService>();
 builder.Services.AddCors(options =>

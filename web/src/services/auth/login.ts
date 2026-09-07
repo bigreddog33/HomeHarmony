@@ -1,5 +1,4 @@
 import type { LoginRequest } from "@/contracts/auth/LoginRequest";
-import type { LoginResponse } from "@/contracts/auth/LoginResponse";
 
 export type LoginFailure =
   | "invalid-credentials"
@@ -17,7 +16,7 @@ export class LoginApiError extends Error {
 
 const LOGIN_TIMEOUT_MS = 15_000;
 
-export async function login(credentials: LoginRequest): Promise<LoginResponse> {
+export async function login(credentials: LoginRequest): Promise<void> {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   if (!apiBaseUrl) {
@@ -25,7 +24,7 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   }
 
   const abortController = new AbortController();
-  const timeoutId = window.setTimeout(
+  const timeoutId = setTimeout(
     () => abortController.abort(),
     LOGIN_TIMEOUT_MS,
   );
@@ -54,8 +53,6 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
     if (!response.ok) {
       throw new LoginApiError("server");
     }
-
-    return (await response.json()) as LoginResponse;
   } catch (error) {
     if (error instanceof LoginApiError) {
       throw error;
@@ -67,6 +64,6 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 
     throw new LoginApiError("network");
   } finally {
-    window.clearTimeout(timeoutId);
+    clearTimeout(timeoutId);
   }
 }
