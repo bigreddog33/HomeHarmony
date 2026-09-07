@@ -4,18 +4,16 @@ namespace Household.Api.Features.Account.Services;
 
 public sealed class MockAccountService : IAccountService
 {
-    public Task<LoginResponse?> LoginAsync(
+    public Task<bool> LoginAsync(
         LoginRequest request,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        LoginResponse? response =
+        var isValid =
             string.Equals(request.Email, "demo@homeharmony.local", StringComparison.OrdinalIgnoreCase)
-            && string.Equals(request.Password, "Password123!", StringComparison.Ordinal) 
-                ? new LoginResponse()
-                : null;
+            && string.Equals(request.Password, "Password123!", StringComparison.Ordinal);
 
-        return Task.FromResult(response);
+        return Task.FromResult(isValid);
     }
 }

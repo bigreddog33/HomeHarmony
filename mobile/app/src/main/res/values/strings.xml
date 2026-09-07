@@ -1,11 +1,20 @@
 <resources>
     <string name="app_name">Home Harmony</string>
-    <string name="login_welcome">Welcome</string>
-    <string name="login_home">Home</string>
-    <string name="login_username_label">Username</string>
+    <string name="login_welcome">Welcome home</string>
+    <string name="login_subtitle">Log in to HomeHarmony.</string>
+    <string name="login_email_label">Email</string>
     <string name="login_password_label">Password</string>
-    <string name="login_button">Login</string>
+    <string name="login_button">Log in</string>
+    <string name="login_loading">Logging in</string>
     <string name="login_create_user">Create user</string>
-    <string name="login_forgot_password">Forgot Password</string>
+    <string name="login_forgot_password">Forgot password</string>
     <string name="login_policies_terms">Policies and terms</string>
+    <string name="login_email_required">Email is required.</string>
+    <string name="login_email_invalid">Enter a valid email address.</string>
+    <string name="login_password_required">Password is required.</string>
+    <string name="login_invalid_credentials">Invalid email or password.</string>
+    <string name="login_invalid_request">Check your email and password, then try again.</string>
+    <string name="login_network_error">Could not connect. Check your connection and try again.</string>
+    <string name="login_server_error">Unable to log in right now. Please try again later.</string>
+    <string name="login_unexpected_error">Something went wrong. Please try again.</string>
 </resources>

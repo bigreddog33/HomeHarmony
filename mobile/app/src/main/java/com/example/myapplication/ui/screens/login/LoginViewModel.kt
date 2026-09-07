@@ -1,93 +1,80 @@
 package com.example.myapplication.ui.screens.login
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myapplication.R
 import com.example.myapplication.data.remote.ApiClient
-import com.example.myapplication.data.remote.auth.LoginRequest
+import com.example.myapplication.data.remote.account.AccountApi
+import com.example.myapplication.data.remote.account.LoginRequest
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.io.IOException
 
-class LoginViewModel : ViewModel() {
+class LoginViewModel(
+    private val accountApi: AccountApi = ApiClient.accountApi
+) : ViewModel() {
 
     var uiState by mutableStateOf(LoginUiState())
         private set
 
-    fun onUsernameChange(Email: String) {
-        uiState = uiState.copy(Email = Email)
+    fun onEmailChange(email: String) {
+        uiState = uiState.copy(email = email, emailError = null, loginError = null)
     }
 
-    fun onPasswordChange(Password: String) {
-        uiState = uiState.copy(Password = Password)
+    fun onPasswordChange(password: String) {
+        uiState = uiState.copy(password = password, passwordError = null, loginError = null)
     }
 
-    fun login(onSuccess: () -> Unit) {
-        if (uiState.Email.isBlank() || uiState.Password.isBlank()) {
-            uiState = uiState.copy(
-                errorMessage = "Username and password are required."
-            )
-            return
-        }
+    fun onSnackbarShown() {
+        uiState = uiState.copy(snackbarMessage = null)
+    }
+
+    fun login() {
+        if (uiState.isLoading || uiState.isLoginSuccessful) return
+
+        val validation = validateLogin(uiState.email, uiState.password)
+        uiState = uiState.copy(
+            emailError = validation.email,
+            passwordError = validation.password,
+            loginError = null,
+            snackbarMessage = null
+        )
+        if (!validation.isValid) return
+
+        val request = LoginRequest(email = uiState.email.trim(), password = uiState.password)
+        uiState = uiState.copy(isLoading = true)
 
         viewModelScope.launch {
-            uiState = uiState.copy(
-                isLoading = true,
-                errorMessage = null
-            )
+            val response = try {
+                accountApi.login(request)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: IOException) {
+                uiState = uiState.copy(snackbarMessage = R.string.login_network_error)
+                return@launch
+            } catch (_: Exception) {
+                uiState = uiState.copy(snackbarMessage = R.string.login_unexpected_error)
+                return@launch
+            } finally {
+                uiState = uiState.copy(isLoading = false)
+            }
 
-            try {
-                val response = ApiClient.authApi.login(
-                    LoginRequest(
-                        Email = uiState.Email,
-                        Password = uiState.Password
-                    )
-                )
-
-                when {
-                    response.isSuccessful -> {
-                        uiState = uiState.copy(
-                            isLoading = false
-                        )
-                        onSuccess()
-                    }
-
-                    response.code() == 401 -> {
-                        uiState = uiState.copy(
-                            isLoading = false,
-                            errorMessage = "Invalid username or password."
-                        )
-                    }
-
-                    else -> {
-                        uiState = uiState.copy(
-                            isLoading = false,
-                            errorMessage = "Something went wrong."
-                        )
-                    }
+            when {
+                response.isSuccessful -> {
+                    uiState = uiState.copy(isLoginSuccessful = true)
                 }
-            } catch (e: IOException) {
-                Log.e("LOGIN_API", "Login request failed", e)
-
-                uiState = uiState.copy(
-                    isLoading = false,
-                    errorMessage =
-                        "${e.javaClass.simpleName}: ${e.message}\n" +
-                                "Cause: ${e.cause?.javaClass?.simpleName}: ${e.cause?.message}"
-                )
-
-            } catch (e: Exception) {
-                Log.e("LOGIN_API", "Login request failed", e)
-
-                uiState = uiState.copy(
-                    isLoading = false,
-                    errorMessage =
-                        "${e.javaClass.simpleName}: ${e.message}\n" +
-                                "Cause: ${e.cause?.javaClass?.simpleName}: ${e.cause?.message}"
-                )
-
+                response.code() == 400 -> {
+                    uiState = uiState.copy(loginError = R.string.login_invalid_request)
+                }
+                response.code() == 401 -> {
+                    uiState = uiState.copy(loginError = R.string.login_invalid_credentials)
+                }
+                else -> {
+                    uiState = uiState.copy(snackbarMessage = R.string.login_server_error)
+                }
             }
         }
     }

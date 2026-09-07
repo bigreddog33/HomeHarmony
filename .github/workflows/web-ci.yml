@@ -6,14 +6,14 @@ on:
       - main
     paths:
       - "web/**"
-      - ".github/workflows/web.yml"
+      - ".github/workflows/web-ci.yml"
 
   pull_request:
     branches:
       - main
     paths:
       - "web/**"
-      - ".github/workflows/web.yml"
+      - ".github/workflows/web-ci.yml"
 
 jobs:
   web-build:
@@ -45,6 +45,10 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-      # 5. Compile the Next.js application for production.
+      # 5. Run the login unit tests.
+      - name: Run unit tests
+        run: npm test
+
+      # 6. Compile the Next.js application for production.
       - name: Build Next.js app
         run: npm run build

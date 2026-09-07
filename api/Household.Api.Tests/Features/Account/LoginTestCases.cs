@@ -6,6 +6,7 @@ public static class LoginTestCases
     {
         { "someone@example.com", "Password123!" },
         { "demo@homeharmony.local", "wrong-password" },
+        { "demo@homeharmony.local", "password123!" },
         { "someone@example.com", "wrong-password" }
     };
 

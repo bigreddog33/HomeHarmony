@@ -1,6 +1,26 @@
+import java.net.URI
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+}
+
+val debugApiBaseUrl = providers.gradleProperty("DEBUG_API_BASE_URL")
+    .orElse("http://127.0.0.1:5193/").get()
+val releaseApiBaseUrl = providers.gradleProperty("RELEASE_API_BASE_URL")
+    .orElse("https://api.homeharmony.invalid/").get()
+
+mapOf("DEBUG_API_BASE_URL" to debugApiBaseUrl, "RELEASE_API_BASE_URL" to releaseApiBaseUrl)
+    .forEach { (name, value) ->
+        val uri = URI(value)
+        require(
+            uri.scheme in listOf("http", "https") && uri.host != null &&
+                uri.userInfo == null && uri.query == null && uri.fragment == null &&
+                value.endsWith("/")
+        ) { "$name must be an HTTP(S) base URL ending in /, without credentials, query or fragment." }
+    }
+require(URI(releaseApiBaseUrl).scheme == "https") {
+    "RELEASE_API_BASE_URL must use HTTPS."
 }
 
 android {
@@ -18,16 +38,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        buildConfigField(
-            "String",
-            "API_BASE_URL",
-            "\"http://127.0.0.1:5193/\""
-        )
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
+        }
         release {
+            buildConfigField("String", "API_BASE_URL", "\"$releaseApiBaseUrl\"")
             optimization {
                 enable = false
             }
@@ -54,6 +72,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -63,6 +82,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

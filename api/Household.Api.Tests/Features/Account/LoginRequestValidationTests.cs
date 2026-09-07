@@ -18,9 +18,37 @@ public sealed class LoginRequestValidationTests
     }
 
     [Theory]
+    [InlineData("not-an-email")]
+    [InlineData("user.example.com")]
+    [InlineData("@example.com")]
+    [InlineData("user@")]
+    [InlineData("user@@example.com")]
+    public void LoginRequest_WithInvalidEmail_IsInvalid(string email)
+    {
+        var request = new LoginRequest(email, "password");
+
+        var isValid = IsValid(request);
+
+        Assert.False(isValid);
+    }
+
+    [Theory]
+    [InlineData(null, "password")]
+    [InlineData("user@example.com", null)]
+    public void LoginRequest_WithNullInput_IsInvalid(string? email, string? password)
+    {
+        var request = new LoginRequest(email!, password!);
+
+        var isValid = IsValid(request);
+
+        Assert.False(isValid);
+    }
+
+    [Theory]
     [InlineData("user@example.com", "x")]
-    [InlineData("not-an-email", "password")]
-    public void LoginRequest_WithNonEmptyInput_IsValid(string email, string password)
+    [InlineData("demo@homeharmony.local", "password")]
+    [InlineData("user+home@example.com", "123")]
+    public void LoginRequest_WithValidEmailAndNonEmptyPassword_IsValid(string email, string password)
     {
         var request = new LoginRequest(email, password);
 
