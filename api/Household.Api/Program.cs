@@ -36,3 +36,6 @@ else
 app.UseCors("WebClient");
 app.MapControllers();
 app.Run();
+
+// Expose the entry point to WebApplicationFactory for request-pipeline tests.
+public partial class Program { }
