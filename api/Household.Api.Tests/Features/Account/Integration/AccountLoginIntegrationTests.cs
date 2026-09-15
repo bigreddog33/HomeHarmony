@@ -1,22 +1,21 @@
 using System.Net;
 using System.Net.Http.Json;
 using Household.Api.Features.Account.Contracts;
+using Household.Api.Tests.Features.Account.Data;
+using Household.Api.Tests.Features.Account.Support;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace Household.Api.Tests.Features.Account;
+namespace Household.Api.Tests.Features.Account.Integration;
 
-public sealed class AccountLoginIntegrationTests : IClassFixture<WebApplicationFactory<Program>>, IDisposable
+[Trait("Category", "Integration")]
+public sealed class AccountLoginIntegrationTests : IDisposable
 {
+    private readonly AccountApiFactory _factory = new();
     private readonly HttpClient _client;
 
-    public AccountLoginIntegrationTests(WebApplicationFactory<Program> factory)
+    public AccountLoginIntegrationTests()
     {
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
-        {
-            BaseAddress = new Uri("https://localhost"),
-            AllowAutoRedirect = false
-        });
+        _client = _factory.CreateApiClient();
     }
 
     [Theory]
@@ -37,23 +36,27 @@ public sealed class AccountLoginIntegrationTests : IClassFixture<WebApplicationF
 
     [Theory]
     [ClassData(typeof(LoginTestCases.ValidRequests))]
-    [ClassData(typeof(LoginTestCases.InvalidCredentials))]
-    public async Task Login_WithValidInputButInvalidCredentials_ReturnsUnauthorized(string email, string password)
+    public async Task Login_WhenServiceRejectsCredentials_ReturnsUnauthorized(string email, string password)
     {
+        _factory.Service.Result = false;
         using var response = await _client.PostAsJsonAsync("/api/account/login", new LoginRequest(email, password));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Single(_factory.Service.Calls);
     }
 
     [Theory]
-    [ClassData(typeof(LoginTestCases.DemoEmails))]
-    public async Task Login_WithDemoCredentials_ReturnsOkWithoutResponseBody(string email)
+    [ClassData(typeof(LoginTestCases.ValidRequests))]
+    public async Task Login_WhenServiceAcceptsCredentials_ReturnsOkWithoutResponseBody(string email, string password)
     {
         using var response = await _client.PostAsJsonAsync(
-            "/api/account/login", new LoginRequest(email, "Password123!"));
+            "/api/account/login", new LoginRequest(email, password));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Empty(await response.Content.ReadAsByteArrayAsync());
+        var request = Assert.IsType<LoginRequest>(Assert.Single(_factory.Service.Calls).Request);
+        Assert.Equal(email, request.Email);
+        Assert.Equal(password, request.Password);
     }
 
     private async Task AssertValidationProblemAsync(string? email, string? password, string field)
@@ -67,7 +70,12 @@ public sealed class AccountLoginIntegrationTests : IClassFixture<WebApplicationF
         Assert.Equal(400, problem.Status);
         Assert.True(problem.Errors.TryGetValue(field, out var errors));
         Assert.NotEmpty(errors);
+        Assert.Empty(_factory.Service.Calls);
     }
 
-    public void Dispose() => _client.Dispose();
+    public void Dispose()
+    {
+        _client.Dispose();
+        _factory.Dispose();
+    }
 }

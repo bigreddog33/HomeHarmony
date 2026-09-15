@@ -1,18 +1,7 @@
-namespace Household.Api.Tests.Features.Account;
+namespace Household.Api.Tests.Features.Account.Data;
 
 public static class LoginTestCases
 {
-    public sealed class InvalidCredentials : TheoryData<string, string>
-    {
-        public InvalidCredentials()
-        {
-            Add("someone@example.com", "Password123!");
-            Add("demo@homeharmony.local", "wrong-password");
-            Add("demo@homeharmony.local", "password123!");
-            Add("someone@example.com", "wrong-password");
-        }
-    }
-
     public sealed class InvalidRequests : TheoryData<string, string>
     {
         public InvalidRequests()
@@ -50,17 +39,8 @@ public static class LoginTestCases
         public ValidRequests()
         {
             Add("user@example.com", "x");
-            Add("demo@homeharmony.local", "password");
+            Add("USER@EXAMPLE.COM", "password");
             Add("user+home@example.com", "123");
-        }
-    }
-
-    public sealed class DemoEmails : TheoryData<string>
-    {
-        public DemoEmails()
-        {
-            Add("demo@homeharmony.local");
-            Add("DEMO@HOMEHARMONY.LOCAL");
         }
     }
 }
