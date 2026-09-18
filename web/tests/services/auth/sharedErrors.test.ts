@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import * as apiClient from "@/services/apiClient";
 import { login } from "@/services/auth/login";
 import { createAccount } from "@/services/auth/createAccount";
+import { loginValues } from "../../fixtures/auth";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -21,7 +22,7 @@ describe.each([
     vi.spyOn(apiClient, "postJson").mockRejectedValue(error);
 
     await expect(
-      submit({ email: "name@example.com", password: "Password1!" }),
+      submit(loginValues()),
     ).rejects.toBe(error);
   });
 });

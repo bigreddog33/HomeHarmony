@@ -1,23 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/services/apiClient";
 import { login, LoginApiError } from "@/services/auth/login";
+import { loginValues } from "../../fixtures/auth";
+import { pendingUntilAborted, stubApi } from "../../support/apiStub";
 
-const credentials = { email: "name@example.com", password: " password " };
-const fetchMock = vi.fn<typeof fetch>();
-
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:5000/");
-  vi.stubGlobal("fetch", fetchMock);
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-  vi.unstubAllEnvs();
-  vi.unstubAllGlobals();
-  vi.restoreAllMocks();
-  fetchMock.mockReset();
-});
+const credentials = loginValues({ password: " password " });
+const fetchMock = stubApi();
 
 describe("login API", () => {
   it("succeeds on an empty 200 response without parsing a response body", async () => {
@@ -68,14 +56,7 @@ describe("login API", () => {
   });
 
   it("aborts a request that takes too long and reports a timeout", async () => {
-    fetchMock.mockImplementation(
-      (_url, options) =>
-        new Promise((_resolve, reject) => {
-          options?.signal?.addEventListener("abort", () => {
-            reject(new DOMException("The request was aborted", "AbortError"));
-          });
-        }),
-    );
+    fetchMock.mockImplementation(pendingUntilAborted);
 
     const request = login(credentials);
     const result = expect(request).rejects.toEqual(new ApiError("timeout"));
