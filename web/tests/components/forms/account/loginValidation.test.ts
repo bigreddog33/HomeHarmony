@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { validateLogin, validateLoginField } from "./loginValidation";
+import {
+  validateLogin,
+  validateLoginField,
+} from "@/components/forms/account/loginValidation";
 
 describe("login validation", () => {
   it.each(["", "   "])("requires both fields when they contain %j", (value) => {

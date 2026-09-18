@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 import type { LoginRequest } from "@/contracts/auth/LoginRequest";
 import { login, LoginApiError } from "@/services/auth/login";
 import Toast from "@/components/feedback/Toast";
-import FormInput from "./FormInput";
-import PasswordInput from "./PasswordInput";
+import FormInput from "../FormInput";
+import PasswordInput from "../PasswordInput";
 import {
   validateLogin,
   validateLoginField,
