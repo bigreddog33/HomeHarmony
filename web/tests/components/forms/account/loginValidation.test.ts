@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { validateLogin, validateLoginField } from "./loginValidation";
+import {
+  validateLogin,
+  validateLoginField,
+} from "@/components/forms/account/loginValidation";
+import { invalidEmails, loginValues } from "../../../fixtures/auth";
 
 describe("login validation", () => {
   it.each(["", "   "])("requires both fields when they contain %j", (value) => {
@@ -9,14 +13,7 @@ describe("login validation", () => {
     });
   });
 
-  it.each([
-    "not-an-email",
-    "name@",
-    "@example.com",
-    "name@example",
-    "name@@example.com",
-    "first last@example.com",
-  ])("rejects invalid email %j", (email) => {
+  it.each(invalidEmails)("rejects invalid email %j", (email) => {
     expect(validateLogin({ email, password: "password" })).toEqual({
       email: "Enter a valid email address.",
       password: undefined,
@@ -41,6 +38,13 @@ describe("login validation", () => {
     expect(validateLogin({ email: "name@example.com", password: "" })).toEqual({
       email: undefined,
       password: "Password is required.",
+    });
+  });
+
+  it("reports only the missing email for a valid password", () => {
+    expect(validateLogin(loginValues({ email: "" }))).toEqual({
+      email: "Email is required.",
+      password: undefined,
     });
   });
 });

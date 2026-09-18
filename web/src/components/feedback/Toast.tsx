@@ -8,7 +8,7 @@ export default function Toast({ message, onClose }: ToastProps) {
     <div
       role="alert"
       aria-live="assertive"
-      className="fixed right-5 top-5 z-50 flex max-w-md items-start gap-3 rounded-xl border border-red-200 bg-white p-4 text-red-950 shadow-2xl shadow-slate-900/20 sm:right-8 sm:top-8"
+      className="fixed right-5 top-5 z-50 flex w-[calc(100%-2.5rem)] max-w-md items-start gap-3 rounded-xl border border-red-200 bg-white p-4 text-red-950 shadow-2xl shadow-slate-900/20 sm:right-8 sm:top-8"
     >
       <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-700">
         !

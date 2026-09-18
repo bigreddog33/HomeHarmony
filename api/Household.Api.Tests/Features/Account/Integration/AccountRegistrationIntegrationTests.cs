@@ -25,7 +25,7 @@ public sealed class AccountRegistrationIntegrationTests : IDisposable
     public async Task CreateUser_WithInvalidPassword_RejectsRequestBeforeCallingService(string? password)
     {
         using var response = await _client.PostAsJsonAsync(CreatePath,
-            new { emailAddress = "user@example.com", password });
+            new { email = "user@example.com", password });
 
         await AssertValidationProblem(response, "Password");
     }
@@ -35,12 +35,13 @@ public sealed class AccountRegistrationIntegrationTests : IDisposable
     public async Task CreateUser_WithValidPassword_AcceptsRequest(string password)
     {
         using var response = await _client.PostAsJsonAsync(CreatePath,
-            new { emailAddress = "user@example.com", password });
+            new { email = "user@example.com", password });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Empty(await response.Content.ReadAsByteArrayAsync());
         var request = Assert.IsType<CreateUserRequest>(
             Assert.Single(_factory.Service.Calls).Request);
+        Assert.Equal("user@example.com", request.Email);
         Assert.Equal(password, request.Password);
     }
 
@@ -49,9 +50,9 @@ public sealed class AccountRegistrationIntegrationTests : IDisposable
     public async Task Endpoint_WithInvalidEmail_RejectsRequestBeforeCallingService(string path, string? email)
     {
         using var response = await _client.PostAsJsonAsync(path,
-            new { emailAddress = email, password = "Password123!" });
+            new { email, password = "Password123!" });
 
-        await AssertValidationProblem(response, "EmailAddress");
+        await AssertValidationProblem(response, "Email");
     }
 
     [Theory]
@@ -59,15 +60,15 @@ public sealed class AccountRegistrationIntegrationTests : IDisposable
     public async Task Endpoint_WithValidEmail_CallsService(string path, string email)
     {
         using var response = await _client.PostAsJsonAsync(path,
-            new { emailAddress = email, password = "Password123!" });
+            new { email, password = "Password123!" });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Empty(await response.Content.ReadAsByteArrayAsync());
         var request = Assert.Single(_factory.Service.Calls).Request;
         var boundEmail = request switch
         {
-            CreateUserRequest create => create.EmailAddress,
-            ResendConfirmationRequest resend => resend.EmailAddress,
+            CreateUserRequest create => create.Email,
+            ResendConfirmationRequest resend => resend.Email,
             _ => throw new InvalidOperationException("Unexpected service request.")
         };
         Assert.Equal(email, boundEmail);
@@ -87,7 +88,7 @@ public sealed class AccountRegistrationIntegrationTests : IDisposable
     [ClassData(typeof(AccountRegistrationCases.Endpoints))]
     public async Task Endpoint_WithUnsupportedContentType_ReturnsUnsupportedMediaType(string path)
     {
-        using var content = new StringContent("emailAddress=user@example.com");
+        using var content = new StringContent("email=user@example.com");
         using var response = await _client.PostAsync(path, content);
 
         Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
@@ -165,7 +166,7 @@ public sealed class AccountRegistrationIntegrationTests : IDisposable
             Assert.False(source.IsCancellationRequested);
     }
 
-    private static object ValidBody() => new { emailAddress = "user@example.com", password = "Password123!" };
+    private static object ValidBody() => new { email = "user@example.com", password = "Password123!" };
 
     private async Task AssertValidationProblem(HttpResponseMessage response, string? field = null)
     {
