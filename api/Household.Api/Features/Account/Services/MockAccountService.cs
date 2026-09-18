@@ -28,7 +28,7 @@ public sealed class MockAccountService : IAccountService
         // The API has already validated the request. Skip account creation for now
         // and return the confirmation result: true for the demo email, false otherwise.
         // This does not store the supplied password or change the demo login.
-        return SendConfirmationAsync(new ResendConfirmationRequest(request.EmailAddress), cancellationToken);
+        return SendConfirmationAsync(new ResendConfirmationRequest(request.Email), cancellationToken);
     }
 
     public Task<bool> SendConfirmationAsync(ResendConfirmationRequest request, CancellationToken cancellationToken)

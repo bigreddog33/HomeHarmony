@@ -5,6 +5,8 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import type { LoginRequest } from "@/contracts/auth/LoginRequest";
+import { ApiError } from "@/services/apiClient";
+import { getApiErrorMessage } from "@/components/feedback/ApiErrorMessage";
 import { login, LoginApiError } from "@/services/auth/login";
 import Toast from "@/components/feedback/Toast";
 import FormInput from "../FormInput";
@@ -20,17 +22,6 @@ const initialValues: LoginRequest = {
   email: "",
   password: "",
 };
-
-function getToastMessage(error: LoginApiError): string {
-  switch (error.failure) {
-    case "timeout":
-      return "The server is taking too long to respond. Please try again.";
-    case "network":
-      return "We couldn't connect right now. Check your internet connection and try again.";
-    default:
-      return "The server could not complete the login. Please try again later.";
-  }
-}
 
 export default function LoginForm() {
   const router = useRouter();
@@ -58,6 +49,7 @@ export default function LoginForm() {
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isSubmitting) return;
 
     const errors = validateLogin(values);
     setFieldErrors(errors);
@@ -78,26 +70,28 @@ export default function LoginForm() {
     try {
       await login({
         email: values.email.trim(),
-        password: values.password,
+        password: values.password.trim(),
       });
       router.push("/home");
     } catch (error) {
-      if (!(error instanceof LoginApiError)) {
-        setToastMessage("An unexpected error occurred. Please try again.");
+      if (error instanceof ApiError) {
+        setToastMessage(getApiErrorMessage(error));
         return;
       }
 
-      if (error.failure === "invalid-credentials") {
-        setCredentialsError("The email or password is incorrect.");
-        return;
+      if (error instanceof LoginApiError) {
+        if (error.failure === "invalid-credentials") {
+          setCredentialsError("The email or password is incorrect.");
+          return;
+        }
+
+        if (error.failure === "invalid-request") {
+          setCredentialsError("Check your email and password, then try again.");
+          return;
+        }
       }
 
-      if (error.failure === "invalid-request") {
-        setCredentialsError("Check your email and password, then try again.");
-        return;
-      }
-
-      setToastMessage(getToastMessage(error));
+      setToastMessage("An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -194,9 +188,10 @@ export default function LoginForm() {
         <button
           type="button"
           disabled={isSubmitting}
+          onClick={() => router.push("/createAccount")}
           className="h-13 w-full rounded-xl border-2 border-indigo-800 bg-white px-5 text-base font-semibold text-indigo-800 transition hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-4 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Create user
+          Create account
         </button>
       </form>
     </>
