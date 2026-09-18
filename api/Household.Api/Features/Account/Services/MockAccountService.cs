@@ -39,6 +39,6 @@ public sealed class MockAccountService : IAccountService
         // This same check handles both the initial confirmation and resend requests;
         // it does not send an actual email.
         return Task.FromResult(
-            string.Equals(request.EmailAddress, DemoEmail, StringComparison.OrdinalIgnoreCase));
+            string.Equals(request.Email, DemoEmail, StringComparison.OrdinalIgnoreCase));
     }
 }

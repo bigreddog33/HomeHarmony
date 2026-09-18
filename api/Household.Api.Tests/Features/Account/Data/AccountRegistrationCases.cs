@@ -54,10 +54,10 @@ public static class AccountRegistrationCases
                 Add(path, "null");
                 Add(path, "{");
                 Add(path, "{}");
-                Add(path, "{\"emailAddress\":123,\"password\":\"Password123!\"}");
+                Add(path, "{\"email\":123,\"password\":\"Password123!\"}");
             }
-            Add(CreatePath, "{\"emailAddress\":\"user@example.com\"}");
-            Add(CreatePath, "{\"emailAddress\":\"user@example.com\",\"password\":123}");
+            Add(CreatePath, "{\"email\":\"user@example.com\"}");
+            Add(CreatePath, "{\"email\":\"user@example.com\",\"password\":123}");
         }
     }
 
