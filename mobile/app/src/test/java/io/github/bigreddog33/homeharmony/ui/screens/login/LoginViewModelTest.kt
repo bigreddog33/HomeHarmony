@@ -1,8 +1,8 @@
 package io.github.bigreddog33.homeharmony.ui.screens.login
 
 import io.github.bigreddog33.homeharmony.R
-import io.github.bigreddog33.homeharmony.data.remote.account.AccountApi
-import io.github.bigreddog33.homeharmony.data.remote.account.LoginRequest
+import io.github.bigreddog33.homeharmony.data.account.AccountApi
+import io.github.bigreddog33.homeharmony.data.account.dto.LoginRequest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +20,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
 
@@ -84,7 +85,7 @@ class LoginViewModelTest {
 
     @Test
     fun `HTTP success needs no body and preserves password whitespace`() = runTest {
-        val api = FakeAccountApi { Response.success(null) }
+        val api = FakeAccountApi { Unit }
         val viewModel = LoginViewModel(api)
         viewModel.onEmailChange(" person@example.com ")
         viewModel.onPasswordChange(" x ")
@@ -104,7 +105,7 @@ class LoginViewModelTest {
 
     @Test
     fun `duplicate submissions are ignored while loading`() = runTest {
-        val pendingResponse = CompletableDeferred<Response<Unit>>()
+        val pendingResponse = CompletableDeferred<Unit>()
         val api = FakeAccountApi { pendingResponse.await() }
         val viewModel = validViewModel(api)
 
@@ -115,7 +116,7 @@ class LoginViewModelTest {
         assertTrue(viewModel.uiState.isLoading)
         assertEquals(1, api.requests.size)
 
-        pendingResponse.complete(Response.success(null))
+        pendingResponse.complete(Unit)
         runCurrent()
 
         assertTrue(viewModel.uiState.isLoginSuccessful)
@@ -124,7 +125,7 @@ class LoginViewModelTest {
 
     @Test
     fun `delayed success remains in state for a screen that returns later`() = runTest {
-        val pendingResponse = CompletableDeferred<Response<Unit>>()
+        val pendingResponse = CompletableDeferred<Unit>()
         val api = FakeAccountApi { pendingResponse.await() }
         val viewModel = validViewModel(api)
 
@@ -133,7 +134,7 @@ class LoginViewModelTest {
         assertFalse(viewModel.uiState.isLoginSuccessful)
 
         // The request completes without a screen callback or a UI observer.
-        pendingResponse.complete(Response.success(null))
+        pendingResponse.complete(Unit)
         runCurrent()
 
         assertTrue(viewModel.uiState.isLoginSuccessful)
@@ -147,7 +148,7 @@ class LoginViewModelTest {
     @Test
     fun `invalid credentials show form error and editing clears it`() = runTest {
         val viewModel = validViewModel(FakeAccountApi {
-            Response.error(401, "Unauthorized".toResponseBody())
+            throw HttpException(Response.error<Unit>(401, "Unauthorized".toResponseBody()))
         })
 
         viewModel.login()
@@ -167,7 +168,7 @@ class LoginViewModelTest {
     @Test
     fun `server validation failure shows safe form feedback`() = runTest {
         val viewModel = validViewModel(FakeAccountApi {
-            Response.error(400, "Technical validation details".toResponseBody())
+            throw HttpException(Response.error<Unit>(400, "Technical validation details".toResponseBody()))
         })
 
         viewModel.login()
@@ -182,7 +183,7 @@ class LoginViewModelTest {
     @Test
     fun `server failure shows transient feedback and can be consumed repeatedly`() = runTest {
         val viewModel = validViewModel(FakeAccountApi {
-            Response.error(500, "Internal technical details".toResponseBody())
+            throw HttpException(Response.error<Unit>(500, "Internal technical details".toResponseBody()))
         })
 
         repeat(2) {
@@ -246,11 +247,11 @@ class LoginViewModelTest {
     }
 
     private class FakeAccountApi(
-        private val result: suspend () -> Response<Unit> = { Response.success(null) }
+        private val result: suspend () -> Unit = { Unit }
     ) : AccountApi {
         val requests = mutableListOf<LoginRequest>()
 
-        override suspend fun login(request: LoginRequest): Response<Unit> {
+        override suspend fun login(request: LoginRequest): Unit {
             requests += request
             return result()
         }

@@ -6,15 +6,15 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.bigreddog33.homeharmony.R
-import io.github.bigreddog33.homeharmony.data.remote.ApiClient
-import io.github.bigreddog33.homeharmony.data.remote.account.AccountApi
-import io.github.bigreddog33.homeharmony.data.remote.account.LoginRequest
-import kotlinx.coroutines.CancellationException
+import io.github.bigreddog33.homeharmony.data.account.AccountApi
+import io.github.bigreddog33.homeharmony.data.account.dto.LoginRequest
+import io.github.bigreddog33.homeharmony.data.network.ApiClient
+import io.github.bigreddog33.homeharmony.data.network.ApiResult
+import io.github.bigreddog33.homeharmony.data.network.apiCall
 import kotlinx.coroutines.launch
-import java.io.IOException
 
 class LoginViewModel(
-    private val accountApi: AccountApi = ApiClient.accountApi
+    private val accountApi: AccountApi = ApiClient.create(AccountApi::class.java)
 ) : ViewModel() {
 
     var uiState by mutableStateOf(LoginUiState())
@@ -44,36 +44,33 @@ class LoginViewModel(
         )
         if (!validation.isValid) return
 
-        val request = LoginRequest(email = uiState.email.trim(), password = uiState.password)
+        val email = uiState.email.trim()
+        val password = uiState.password
         uiState = uiState.copy(isLoading = true)
 
         viewModelScope.launch {
-            val response = try {
-                accountApi.login(request)
-            } catch (exception: CancellationException) {
-                throw exception
-            } catch (_: IOException) {
-                uiState = uiState.copy(snackbarMessage = R.string.login_network_error)
-                return@launch
-            } catch (_: Exception) {
-                uiState = uiState.copy(snackbarMessage = R.string.login_unexpected_error)
-                return@launch
+            val result = try {
+                apiCall { accountApi.login(LoginRequest(email, password)) }
             } finally {
                 uiState = uiState.copy(isLoading = false)
             }
 
-            when {
-                response.isSuccessful -> {
+            when (result) {
+                is ApiResult.Success -> {
                     uiState = uiState.copy(isLoginSuccessful = true)
                 }
-                response.code() == 400 -> {
-                    uiState = uiState.copy(loginError = R.string.login_invalid_request)
+                is ApiResult.HttpError -> {
+                    uiState = when (result.code) {
+                        400 -> uiState.copy(loginError = R.string.login_invalid_request)
+                        401 -> uiState.copy(loginError = R.string.login_invalid_credentials)
+                        else -> uiState.copy(snackbarMessage = R.string.login_server_error)
+                    }
                 }
-                response.code() == 401 -> {
-                    uiState = uiState.copy(loginError = R.string.login_invalid_credentials)
+                ApiResult.NetworkError -> {
+                    uiState = uiState.copy(snackbarMessage = R.string.login_network_error)
                 }
-                else -> {
-                    uiState = uiState.copy(snackbarMessage = R.string.login_server_error)
+                ApiResult.UnexpectedError -> {
+                    uiState = uiState.copy(snackbarMessage = R.string.login_unexpected_error)
                 }
             }
         }
