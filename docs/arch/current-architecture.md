@@ -23,7 +23,7 @@ flowchart LR
 | --- | --- |
 | API startup | [`Program.cs`](../../api/Household.Api/Program.cs) registers controllers, Problem Details, OpenAPI, CORS and the scoped mock account service. |
 | Account feature | [`Features/Account`](../../api/Household.Api/Features/Account) contains the request contract, controller, service interface and implementation. |
-| Web | [`src/app`](../../web/src/app) owns routes; [`components/forms`](../../web/src/components/forms) owns inputs, validation and form state; [`services/auth/login.ts`](../../web/src/services/auth/login.ts) performs HTTP requests with a 15-second timeout. |
+| Web | [`src/app`](../../web/src/app) owns routes grouped into `(account)` and `(main)`; [`components/forms/account`](../../web/src/components/forms/account) owns account forms and validation, with reusable inputs in its parent folder; [`services/auth/login.ts`](../../web/src/services/auth/login.ts) performs HTTP requests with a 15-second timeout. |
 | Android | [`homeharmony`](../../mobile/app/src/main/java/io/github/bigreddog33/homeharmony) contains Compose screens, navigation, login ViewModel/state, validation and Retrofit contracts. The package/application ID is `io.github.bigreddog33.homeharmony`. |
 
 The browser calls the API directly; Next.js is not an authentication proxy. Android calls the same endpoint through Retrofit. The request contract is represented separately in C#, TypeScript and Kotlin, without generated client code.
@@ -54,7 +54,7 @@ Registration password policy does not apply to login: a nonempty password is val
 ## Verification
 
 - API unit tests exercise the controller and mock service. [`AccountLoginIntegrationTests`](../../api/Household.Api.Tests/Features/Account/AccountLoginIntegrationTests.cs) uses `WebApplicationFactory<Program>` and the actual startup/DI configuration to send JSON through routing, binding, automatic validation and controller execution. It checks field-level validation Problem Details, rejected credentials, and the empty success body.
-- Web Vitest tests cover validation and login-service outcomes with mocked requests.
+- Web Vitest tests in [`web/tests`](../../web/tests) mirror the source folders and cover validation and login-service outcomes with mocked requests.
 - Android JVM tests cover validation and ViewModel state transitions with a fake account API and coroutine test dispatchers. The generated example instrumented test has been removed.
 - GitHub Actions builds/tests each application; Android's Gradle build also runs lint. There is no device or browser end-to-end suite in CI.
 

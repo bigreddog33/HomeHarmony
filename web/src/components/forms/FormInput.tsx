@@ -27,7 +27,11 @@ export default function FormInput({
         {...inputProps}
         id={id}
         aria-invalid={Boolean(error)}
-        aria-describedby={error ? errorId : inputProps["aria-describedby"]}
+        aria-describedby={
+          [inputProps["aria-describedby"], error ? errorId : undefined]
+            .filter(Boolean)
+            .join(" ") || undefined
+        }
         className={`h-13 w-full rounded-xl border bg-white px-4 text-base text-slate-950 outline-none transition placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 ${
           error
             ? "border-red-500 focus:border-red-600 focus:ring-3 focus:ring-red-100"

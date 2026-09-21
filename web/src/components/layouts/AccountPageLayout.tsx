@@ -1,7 +1,17 @@
 import Image from "next/image";
-import LoginForm from "@/components/forms/LoginForm";
+import type { ReactNode } from "react";
 
-export default function LoginPage() {
+type AccountPageLayoutProps = {
+  titleId: string;
+  sidebar: ReactNode;
+  children: ReactNode;
+};
+
+export default function AccountPageLayout({
+  titleId,
+  sidebar,
+  children,
+}: AccountPageLayoutProps) {
   return (
     <main className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-5 py-8 sm:px-8 lg:px-12">
       <div className="pointer-events-none absolute -right-28 -top-32 -z-10 h-[34rem] w-[34rem] rotate-[22deg] opacity-25 lg:-right-16 lg:-top-40 lg:h-[44rem] lg:w-[44rem]">
@@ -25,12 +35,13 @@ export default function LoginPage() {
         />
       </div>
 
+      {/* Reserve room for the longer registration form; allow errors and zoom to expand it. */}
       <section
-        className="grid w-full max-w-5xl overflow-hidden rounded-[2rem] border border-white/80 bg-white/90 shadow-[0_30px_80px_-30px_rgba(30,27,75,0.35)] backdrop-blur sm:min-h-[640px] lg:grid-cols-[1.05fr_1fr]"
-        aria-labelledby="login-title"
+        className="grid min-h-[60rem] w-full max-w-5xl overflow-hidden rounded-[2rem] border border-white/80 bg-white/90 shadow-[0_30px_80px_-30px_rgba(30,27,75,0.35)] backdrop-blur sm:min-h-[56rem] lg:grid-cols-[1.05fr_1fr]"
+        aria-labelledby={titleId}
       >
         <div className="relative hidden overflow-hidden bg-indigo-950 px-12 py-14 text-white lg:flex lg:flex-col lg:justify-between">
-          <div className="absolute -right-24 -top-20 h-80 w-80 rotate-[18deg] opacity-30">
+          <div className="pointer-events-none absolute -right-24 -top-20 h-80 w-80 rotate-[18deg] opacity-30">
             <Image
               className="object-contain"
               src="/flower-logo.svg"
@@ -69,20 +80,7 @@ export default function LoginPage() {
             </span>
           </div>
 
-          <div className="relative max-w-md">
-            <p className="mb-5 text-sm font-semibold uppercase tracking-[0.24em] text-violet-200">
-              Your home, in rhythm
-            </p>
-            <h2 className="text-5xl font-bold leading-[1.08] tracking-[-0.04em]">
-              More harmony.
-              <br />
-              Less household noise.
-            </h2>
-            <p className="mt-6 max-w-sm text-base leading-7 text-indigo-100/80">
-              Keep the people, plans, and everyday details of your home together
-              in one calm place.
-            </p>
-          </div>
+          <div className="relative max-w-md">{sidebar}</div>
 
           <p className="relative text-sm text-indigo-200/70">
             Made for life together.
@@ -118,31 +116,7 @@ export default function LoginPage() {
               <span className="font-semibold tracking-tight">HomeHarmony</span>
             </div>
 
-            <header className="mb-9">
-              <p className="text-5xl font-extrabold leading-none tracking-[-0.055em] text-indigo-800 sm:text-6xl">
-                Welcome
-              </p>
-              <h1
-                id="login-title"
-                className="mt-[-0.08em] pl-1 text-4xl font-light uppercase tracking-[0.18em] text-purple-700 sm:text-5xl"
-              >
-                Home
-              </h1>
-              <p className="mt-5 text-sm leading-6 text-slate-500 sm:text-base">
-                Sign in to continue to your household.
-              </p>
-            </header>
-
-            <LoginForm />
-
-            <div className="mt-8 border-t border-slate-200 pt-6 text-center">
-              <button
-                type="button"
-                className="rounded text-sm font-medium text-indigo-700 underline underline-offset-4 transition hover:text-indigo-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-4"
-              >
-                Policies and terms
-              </button>
-            </div>
+            {children}
           </div>
         </div>
       </section>

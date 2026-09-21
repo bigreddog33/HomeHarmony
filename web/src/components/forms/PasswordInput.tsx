@@ -5,6 +5,10 @@ import { useState } from "react";
 import FormInput from "./FormInput";
 
 type PasswordInputProps = {
+  id?: string;
+  label?: string;
+  autoComplete?: "current-password" | "new-password";
+  descriptionId?: string;
   value: string;
   onChange: ChangeEventHandler<HTMLInputElement>;
   onBlur: FocusEventHandler<HTMLInputElement>;
@@ -13,6 +17,10 @@ type PasswordInputProps = {
 };
 
 export default function PasswordInput({
+  id = "password",
+  label = "Password",
+  autoComplete = "current-password",
+  descriptionId,
   value,
   onChange,
   onBlur,
@@ -24,11 +32,12 @@ export default function PasswordInput({
   return (
     <div className="relative">
       <FormInput
-        id="password"
-        name="password"
+        id={id}
+        name={id}
         type={isVisible ? "text" : "password"}
-        label="Password"
-        autoComplete="current-password"
+        label={label}
+        autoComplete={autoComplete}
+        aria-describedby={descriptionId}
         value={value}
         onChange={onChange}
         onBlur={onBlur}
@@ -41,7 +50,8 @@ export default function PasswordInput({
         onClick={() => setIsVisible((current) => !current)}
         disabled={disabled}
         className="absolute right-2 top-7 grid h-9 w-9 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-indigo-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
-        aria-label={isVisible ? "Hide password" : "Show password"}
+        aria-label={`${isVisible ? "Hide" : "Show"} ${label.toLowerCase()}`}
+        aria-controls={id}
         aria-pressed={isVisible}
       >
         {isVisible ? (
