@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 
 import io.github.bigreddog33.homeharmony.R
-import io.github.bigreddog33.homeharmony.R
 import io.github.bigreddog33.homeharmony.data.account.AccountApi
 import io.github.bigreddog33.homeharmony.data.account.dto.CreateAccountRequest
 import io.github.bigreddog33.homeharmony.data.network.ApiClient
@@ -23,19 +22,19 @@ class CreateAccountViewModel(
         private set
 
     fun onEmailChange(email: String) {
-        uiState = uiState.copy(email = email, emailError = null, createAccountError = null)
+        uiState = uiState.copy(email = email, emailError = null, emailConfirmError = null, createAccountError = null)
     }
 
     fun onEmailConfirmChange(emailConfirm: String) {
-        uiState = uiState.copy(emailConfirm = email, emailErrorConfirm = null, createAccountError = null)
+        uiState = uiState.copy(emailConfirm = emailConfirm, emailConfirmError = null, createAccountError = null)
     }
 
     fun onPasswordChange(password: String) {
-        uiState = uiState.copy(password = password, passwordError = null, createAccountError = null)
+        uiState = uiState.copy(password = password, passwordError = null, passwordConfirmError = null, createAccountError = null)
     }
 
-    fun onPasswordConfirmChange(password: String) {
-        uiState = uiState.copy(passwordConfirm = password, passwordErrorConfirm = null, createAccountError = null)
+    fun onPasswordConfirmChange(passwordConfirm: String) {
+        uiState = uiState.copy(passwordConfirm = passwordConfirm, passwordConfirmError = null, createAccountError = null)
     }
 
     fun onSnackbarShown() {
@@ -45,7 +44,7 @@ class CreateAccountViewModel(
     fun createAccount() {
         if (uiState.isLoading || uiState.isCreateAccountSuccessful) return
 
-        val validation = validateLogin(uiState.email, uiState.password, uiState.emailConfirm, uiState.passwordConfirm)
+        val validation = validateCreateAccount(uiState.email, uiState.password, uiState.emailConfirm, uiState.passwordConfirm)
         uiState = uiState.copy(
             emailError = validation.email,
             passwordError = validation.password,
@@ -75,8 +74,10 @@ class CreateAccountViewModel(
                 is ApiResult.HttpError -> {
                     uiState = when (result.code) {
                         400 -> uiState.copy(createAccountError = R.string.createAccount_invalid_request)
-                        401 -> uiState.copy(createAccountError = R.string.createAccount_invalid_credentials)
-                        else -> uiState.copy(snackbarMessage = R.string.server_error)
+                        401, 403 -> uiState.copy(createAccountError = R.string.createAccount_failed)
+                        409 -> uiState.copy(createAccountError = R.string.createAccount_email_in_use)
+                        429 -> uiState.copy(snackbarMessage = R.string.too_many_requests)
+                        else -> uiState.copy(snackbarMessage = R.string.createAccount_server_error)
                     }
                 }
 
@@ -89,10 +90,5 @@ class CreateAccountViewModel(
                 }
             }
         }
-    }
-
-    //TODO
-    fun goBackLogin() {
-
     }
 }

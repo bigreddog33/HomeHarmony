@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.filter
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
+    onCreateAccountClick: () -> Unit,
     viewModel: LoginViewModel = viewModel()
 ) {
     val state = viewModel.uiState
@@ -103,7 +104,8 @@ fun LoginScreen(
                         onLoginClick = {
                             focusManager.clearFocus()
                             viewModel.login()
-                        }
+                        },
+                        onCreateAccountClick = onCreateAccountClick
                     )
                     LoginFooter()
                 }
@@ -170,7 +172,8 @@ private fun LoginForm(
     state: LoginUiState,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
-    onLoginClick: () -> Unit
+    onLoginClick: () -> Unit,
+    onCreateAccountClick: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -178,7 +181,7 @@ private fun LoginForm(
         OutlinedTextField(
             value = state.email,
             onValueChange = onEmailChange,
-            label = { Text(stringResource(R.string.login_email_label)) },
+            label = { Text(stringResource(R.string.email_label)) },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading,
             isError = state.emailError != null,
@@ -200,7 +203,7 @@ private fun LoginForm(
         OutlinedTextField(
             value = state.password,
             onValueChange = onPasswordChange,
-            label = { Text(stringResource(R.string.login_password_label)) },
+            label = { Text(stringResource(R.string.password_label)) },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading,
             isError = state.passwordError != null,
@@ -251,13 +254,13 @@ private fun LoginForm(
         }
 
         OutlinedButton(
-            onClick = {},
+            onClick = onCreateAccountClick,
             enabled = !state.isLoading,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = MaterialTheme.shapes.medium
         ) {
             Text(
-                text = stringResource(R.string.login_create_user),
+                text = stringResource(R.string.createAccount_button),
                 style = MaterialTheme.typography.titleSmall
             )
         }
@@ -268,11 +271,11 @@ private fun LoginForm(
 private fun LoginFooter() {
     Column {
         TextButton(onClick = {}) {
-            Text(stringResource(R.string.login_forgot_password))
+            Text(stringResource(R.string.forgot_password))
         }
         TextButton(onClick = {}) {
             Text(
-                text = stringResource(R.string.login_policies_terms),
+                text = stringResource(R.string.policies_terms),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

@@ -4,7 +4,7 @@ import androidx.annotation.StringRes
 import androidx.core.util.PatternsCompat
 import io.github.bigreddog33.homeharmony.R
 
-data class LoginValidationErrors(
+data class CreateAccountValidationErrors(
     @StringRes val email: Int? = null,
     @StringRes val password: Int? = null,
     @StringRes val emailConfirm: Int? = null,
@@ -14,23 +14,39 @@ data class LoginValidationErrors(
         get() = email == null && password == null && emailConfirm == null && passwordConfirm == null
 }
 
-fun validateLogin(email: String, password: String, emailConfirm: String, passwordConfirm: String): LoginValidationErrors {
+fun validateCreateAccount(email: String, password: String, emailConfirm: String, passwordConfirm: String): CreateAccountValidationErrors {
     val emailError = when {
-        email.isBlank() -> R.string.createAccount_email_required
-        !PatternsCompat.EMAIL_ADDRESS.matcher(email.trim()).matches() -> R.string.createAccount_email_invalid
-        email != emailConfirm -> R.string.createAccount_email_not_matching
-        else -> null
-    }
-    
-    val passwordError = when {
-        password.isBlank() -> R.string.createAccount_password_required
-        password.trim() != "rule from api here" -> R.string.createAccount_password_invalid //TODO
-        password != passwordConfirm ->  R.string.createAccount_password_not_matching
+        email.isBlank() -> R.string.email_required
+        !PatternsCompat.EMAIL_ADDRESS.matcher(email.trim()).matches() -> R.string.email_invalid
         else -> null
     }
 
-    return LoginValidationErrors(
+    val emailConfirmError = when {
+        emailConfirm.isBlank() -> R.string.email_required
+        !PatternsCompat.EMAIL_ADDRESS.matcher(emailConfirm.trim()).matches() -> R.string.email_invalid
+        email.trim() != emailConfirm.trim() -> R.string.createAccount_email_not_matching
+        else -> null
+    }
+
+    val passwordError = when {
+        password.isBlank() -> R.string.password_required
+        password.length < 8 || !passwordRules.matches(password) -> R.string.createAccount_password_rules
+        else -> null
+    }
+
+    val passwordConfirmError = when {
+        passwordConfirm.isBlank() -> R.string.password_required
+        password != passwordConfirm -> R.string.createAccount_password_not_matching
+        else -> null
+    }
+
+    return CreateAccountValidationErrors(
         email = emailError,
-        password = passwordError
+        password = passwordError,
+        emailConfirm = emailConfirmError,
+        passwordConfirm = passwordConfirmError
     )
 }
+
+// Keep aligned with the API's CreateUserRequest password validation.
+private val passwordRules = Regex("""(?s)\A(?=.*[0-9])(?=.*[A-Z])(?=.*[\p{P}\p{S}]).*\z""")

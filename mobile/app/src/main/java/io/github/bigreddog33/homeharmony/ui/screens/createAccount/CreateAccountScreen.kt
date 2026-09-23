@@ -1,16 +1,50 @@
 package io.github.bigreddog33.homeharmony.ui.screens.createAccount
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import io.github.bigreddog33.homeharmony.R
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
 
 @Composable
 fun CreateAccountScreen(
+    onCreateAccountSuccess: () -> Unit,
+    onBackToLoginClick: () -> Unit,
     viewModel: CreateAccountViewModel = viewModel()
 ) {
     val state = viewModel.uiState
@@ -26,12 +60,12 @@ fun CreateAccountScreen(
                 .filter { it }
                 .collect { currentOnCreateAccountSuccess() }
         }
+    }
 
-        LaunchedEffect(snackbarMessage) {
-            snackbarMessage?.let {
-                snackbarHostState.showSnackbar(it)
-                viewModel.onSnackbarShown()
-            }
+    LaunchedEffect(snackbarMessage) {
+        snackbarMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.onSnackbarShown()
         }
     }
 
@@ -71,8 +105,9 @@ fun CreateAccountScreen(
                         onPasswordConfirmChange = viewModel::onPasswordConfirmChange,
                         onCreateAccountClick = {
                             focusManager.clearFocus()
-                            viewModel.login()
-                        }
+                            viewModel.createAccount()
+                        },
+                        onBackToLoginClick = onBackToLoginClick
                     )
                     CreateAccountFooter()
                 }
@@ -141,7 +176,8 @@ private fun CreateAccountForm(
     onEmailConfirmChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onPasswordConfirmChange: (String) -> Unit,
-    onCreateAccountClick: () -> Unit
+    onCreateAccountClick: () -> Unit,
+    onBackToLoginClick: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -149,7 +185,7 @@ private fun CreateAccountForm(
         OutlinedTextField(
             value = state.email,
             onValueChange = onEmailChange,
-            label = { Text(stringResource(R.string.createAccount_email_label)) },
+            label = { Text(stringResource(R.string.email_label)) },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading,
             isError = state.emailError != null,
@@ -171,7 +207,7 @@ private fun CreateAccountForm(
         OutlinedTextField(
             value = state.emailConfirm,
             onValueChange = onEmailConfirmChange,
-            label = { Text(stringResource(R.string.createAccount_email_label)) },
+            label = { Text(stringResource(R.string.email_confirm_label)) },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading,
             isError = state.emailConfirmError != null,
@@ -195,28 +231,30 @@ private fun CreateAccountForm(
         OutlinedTextField(
             value = state.password,
             onValueChange = onPasswordChange,
-            label = { Text(stringResource(R.string.createAccount_password_label)) },
+            label = { Text(stringResource(R.string.password_label)) },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading,
             isError = state.passwordError != null,
-            supportingText = state.passwordError?.let { error ->
-                { Text(stringResource(error)) }
+            supportingText = {
+                Text(stringResource(state.passwordError ?: R.string.createAccount_password_rules))
             },
             visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 autoCorrectEnabled = false,
                 keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
+                imeAction = ImeAction.Next
             ),
-            keyboardActions = KeyboardActions(onDone = { onCreateAccountClick() }),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            ),
             shape = MaterialTheme.shapes.medium
         )
 
         OutlinedTextField(
             value = state.passwordConfirm,
             onValueChange = onPasswordConfirmChange,
-            label = { Text(stringResource(R.string.createAccount_password_label)) },
+            label = { Text(stringResource(R.string.password_confirm_label)) },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading,
             isError = state.passwordConfirmError != null,
@@ -268,7 +306,7 @@ private fun CreateAccountForm(
         }
 
         OutlinedButton(
-            onClick = {},
+            onClick = onBackToLoginClick,
             enabled = !state.isLoading,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = MaterialTheme.shapes.medium
@@ -284,9 +322,6 @@ private fun CreateAccountForm(
 @Composable
 private fun CreateAccountFooter() {
     Column {
-        TextButton(onClick = {}) {
-            Text(stringResource(R.string.forgot_password))
-        }
         TextButton(onClick = {}) {
             Text(
                 text = stringResource(R.string.policies_terms),

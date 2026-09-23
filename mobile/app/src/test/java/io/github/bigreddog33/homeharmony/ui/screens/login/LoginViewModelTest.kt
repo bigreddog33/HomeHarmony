@@ -2,6 +2,7 @@ package io.github.bigreddog33.homeharmony.ui.screens.login
 
 import io.github.bigreddog33.homeharmony.R
 import io.github.bigreddog33.homeharmony.data.account.AccountApi
+import io.github.bigreddog33.homeharmony.data.account.dto.CreateAccountRequest
 import io.github.bigreddog33.homeharmony.data.account.dto.LoginRequest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -46,8 +47,8 @@ class LoginViewModelTest {
 
         assertTrue(api.requests.isEmpty())
         assertFalse(viewModel.uiState.isLoginSuccessful)
-        assertEquals(R.string.login_email_required, viewModel.uiState.emailError)
-        assertEquals(R.string.login_password_required, viewModel.uiState.passwordError)
+        assertEquals(R.string.email_required, viewModel.uiState.emailError)
+        assertEquals(R.string.password_required, viewModel.uiState.passwordError)
         assertNull(viewModel.uiState.loginError)
         assertNull(viewModel.uiState.snackbarMessage)
         assertFalse(viewModel.uiState.isLoading)
@@ -64,7 +65,7 @@ class LoginViewModelTest {
         runCurrent()
 
         assertTrue(api.requests.isEmpty())
-        assertEquals(R.string.login_email_invalid, viewModel.uiState.emailError)
+        assertEquals(R.string.email_invalid, viewModel.uiState.emailError)
         assertFalse(viewModel.uiState.isLoginSuccessful)
         assertNull(viewModel.uiState.passwordError)
     }
@@ -77,7 +78,7 @@ class LoginViewModelTest {
         viewModel.onEmailChange("person@example.com")
 
         assertNull(viewModel.uiState.emailError)
-        assertEquals(R.string.login_password_required, viewModel.uiState.passwordError)
+        assertEquals(R.string.password_required, viewModel.uiState.passwordError)
 
         viewModel.onPasswordChange("x")
         assertNull(viewModel.uiState.passwordError)
@@ -207,7 +208,7 @@ class LoginViewModelTest {
         viewModel.login()
         runCurrent()
 
-        assertEquals(R.string.login_network_error, viewModel.uiState.snackbarMessage)
+        assertEquals(R.string.network_error, viewModel.uiState.snackbarMessage)
         assertFalse(viewModel.uiState.isLoginSuccessful)
         assertNull(viewModel.uiState.loginError)
         assertFalse(viewModel.uiState.isLoading)
@@ -222,7 +223,7 @@ class LoginViewModelTest {
         viewModel.login()
         runCurrent()
 
-        assertEquals(R.string.login_unexpected_error, viewModel.uiState.snackbarMessage)
+        assertEquals(R.string.unexpected_error, viewModel.uiState.snackbarMessage)
         assertFalse(viewModel.uiState.isLoginSuccessful)
         assertNull(viewModel.uiState.loginError)
         assertFalse(viewModel.uiState.isLoading)
@@ -254,6 +255,10 @@ class LoginViewModelTest {
         override suspend fun login(request: LoginRequest): Unit {
             requests += request
             return result()
+        }
+
+        override suspend fun createAccount(request: CreateAccountRequest): Unit {
+            error("Account creation is not used by login tests.")
         }
     }
 }

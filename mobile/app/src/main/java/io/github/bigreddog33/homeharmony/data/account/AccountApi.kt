@@ -1,6 +1,7 @@
 package io.github.bigreddog33.homeharmony.data.account
 
-import io.github.bigreddog33.homeharmony.data.account.dto
+import io.github.bigreddog33.homeharmony.data.account.dto.CreateAccountRequest
+import io.github.bigreddog33.homeharmony.data.account.dto.LoginRequest
 import retrofit2.http.Body
 import retrofit2.http.POST
 

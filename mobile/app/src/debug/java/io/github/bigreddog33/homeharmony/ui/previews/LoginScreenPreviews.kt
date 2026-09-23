@@ -8,6 +8,6 @@ import io.github.bigreddog33.homeharmony.ui.theme.HomeHarmonyTheme
 @Composable
 fun LoginScreenPreview() {
     HomeHarmonyTheme {
-        LoginScreen(onLoginSuccess = {})
+        LoginScreen(onLoginSuccess = {}, onCreateAccountClick = {})
     }
 }

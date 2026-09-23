@@ -12,8 +12,8 @@ class LoginValidationTest {
     fun `empty fields are required`() {
         val errors = validateLogin("", "")
 
-        assertEquals(R.string.login_email_required, errors.email)
-        assertEquals(R.string.login_password_required, errors.password)
+        assertEquals(R.string.email_required, errors.email)
+        assertEquals(R.string.password_required, errors.password)
         assertFalse(errors.isValid)
     }
 
@@ -21,8 +21,8 @@ class LoginValidationTest {
     fun `whitespace only fields are required`() {
         val errors = validateLogin(" \t", " \n")
 
-        assertEquals(R.string.login_email_required, errors.email)
-        assertEquals(R.string.login_password_required, errors.password)
+        assertEquals(R.string.email_required, errors.email)
+        assertEquals(R.string.password_required, errors.password)
     }
 
     @Test
@@ -31,7 +31,7 @@ class LoginValidationTest {
             .forEach { email ->
                 val errors = validateLogin(email, "password")
 
-                assertEquals(email, R.string.login_email_invalid, errors.email)
+                assertEquals(email, R.string.email_invalid, errors.email)
                 assertNull(errors.password)
                 assertFalse(errors.isValid)
             }
@@ -42,7 +42,7 @@ class LoginValidationTest {
         val errors = validateLogin("person@example.com", "")
 
         assertNull(errors.email)
-        assertEquals(R.string.login_password_required, errors.password)
+        assertEquals(R.string.password_required, errors.password)
     }
 
     @Test

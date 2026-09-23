@@ -71,18 +71,13 @@ class LoginViewModel(
                 }
 
                 ApiResult.NetworkError -> {
-                    uiState = uiState.copy(snackbarMessage = R.string.login_network_error)
+                    uiState = uiState.copy(snackbarMessage = R.string.network_error)
                 }
 
                 ApiResult.UnexpectedError -> {
-                    uiState = uiState.copy(snackbarMessage = R.string.login_unexpected_error)
+                    uiState = uiState.copy(snackbarMessage = R.string.unexpected_error)
                 }
             }
         }
-    }
-
-    //TODO
-    fun goToCreateAccount() {
-
     }
 }
