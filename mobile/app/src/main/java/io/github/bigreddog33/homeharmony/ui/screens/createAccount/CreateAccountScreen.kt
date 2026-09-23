@@ -34,7 +34,7 @@ fun CreateAccountScreen(
             }
         }
     }
-    
+
     Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { paddingValues ->
         Box(
             modifier = Modifier
@@ -66,9 +66,9 @@ fun CreateAccountScreen(
                     CreateAccountForm(
                         state = state,
                         onEmailChange = viewModel::onEmailChange,
-                            onEmailConfirmChange = viewModel::onEmailConfirmChange,
+                        onEmailConfirmChange = viewModel::onEmailConfirmChange,
                         onPasswordChange = viewModel::onPasswordChange,
-                            onPasswordConfirmChange = viewModel::onPasswordConfirmChange,
+                        onPasswordConfirmChange = viewModel::onPasswordConfirmChange,
                         onCreateAccountClick = {
                             focusManager.clearFocus()
                             viewModel.login()
@@ -131,5 +131,167 @@ private fun CreateAccountHeader() {
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+@Composable
+private fun CreateAccountForm(
+    state: CreateAccountUiState,
+    onEmailChange: (String) -> Unit,
+    onEmailConfirmChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onPasswordConfirmChange: (String) -> Unit,
+    onCreateAccountClick: () -> Unit
+) {
+    val focusManager = LocalFocusManager.current
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        OutlinedTextField(
+            value = state.email,
+            onValueChange = onEmailChange,
+            label = { Text(stringResource(R.string.createAccount_email_label)) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading,
+            isError = state.emailError != null,
+            supportingText = state.emailError?.let { error ->
+                { Text(stringResource(error)) }
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            ),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        OutlinedTextField(
+            value = state.emailConfirm,
+            onValueChange = onEmailConfirmChange,
+            label = { Text(stringResource(R.string.createAccount_email_label)) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading,
+            isError = state.emailConfirmError != null,
+            supportingText = state.emailConfirmError?.let { error ->
+                { Text(stringResource(error)) }
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            ),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        OutlinedTextField(
+            value = state.password,
+            onValueChange = onPasswordChange,
+            label = { Text(stringResource(R.string.createAccount_password_label)) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading,
+            isError = state.passwordError != null,
+            supportingText = state.passwordError?.let { error ->
+                { Text(stringResource(error)) }
+            },
+            visualTransformation = PasswordVisualTransformation(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(onDone = { onCreateAccountClick() }),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        OutlinedTextField(
+            value = state.passwordConfirm,
+            onValueChange = onPasswordConfirmChange,
+            label = { Text(stringResource(R.string.createAccount_password_label)) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading,
+            isError = state.passwordConfirmError != null,
+            supportingText = state.passwordConfirmError?.let { error ->
+                { Text(stringResource(error)) }
+            },
+            visualTransformation = PasswordVisualTransformation(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(onDone = { onCreateAccountClick() }),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        state.createAccountError?.let { error ->
+            Text(
+                text = stringResource(error),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Button(
+            onClick = onCreateAccountClick,
+            enabled = !state.isLoading,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            if (state.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = LocalContentColor.current,
+                    strokeWidth = 2.dp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Text(
+                text = stringResource(
+                    if (state.isLoading) R.string.createAccount_loading else R.string.createAccount_button
+                ),
+                style = MaterialTheme.typography.titleSmall
+            )
+        }
+
+        OutlinedButton(
+            onClick = {},
+            enabled = !state.isLoading,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Text(
+                text = stringResource(R.string.createAccount_login),
+                style = MaterialTheme.typography.titleSmall
+            )
+        }
+    }
+}
+
+@Composable
+private fun CreateAccountFooter() {
+    Column {
+        TextButton(onClick = {}) {
+            Text(stringResource(R.string.forgot_password))
+        }
+        TextButton(onClick = {}) {
+            Text(
+                text = stringResource(R.string.policies_terms),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
