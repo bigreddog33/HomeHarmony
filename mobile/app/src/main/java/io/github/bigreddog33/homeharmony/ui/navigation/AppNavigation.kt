@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import io.github.bigreddog33.homeharmony.ui.screens.home.HomeScreen
 import io.github.bigreddog33.homeharmony.ui.screens.login.LoginScreen
+import io.github.bigreddog33.homeharmony.ui.screens.createAccount.CreateAccountScreen
 
 @Composable
 fun AppNavigation() {
@@ -29,6 +30,10 @@ fun AppNavigation() {
 
         composable("home") {
             HomeScreen()
+        }
+        
+        composable("createAccount") {
+            CreateAccountScreen()
         }
     }
 }
