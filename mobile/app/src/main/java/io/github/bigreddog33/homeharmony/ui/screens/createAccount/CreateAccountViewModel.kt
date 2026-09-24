@@ -1,4 +1,4 @@
-package io.github.bigreddog33.homeharmony.ui.screens.login
+package io.github.bigreddog33.homeharmony.ui.screens.createAccount
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -8,40 +8,49 @@ import androidx.lifecycle.viewModelScope
 
 import io.github.bigreddog33.homeharmony.R
 import io.github.bigreddog33.homeharmony.data.account.AccountApi
-import io.github.bigreddog33.homeharmony.data.account.dto.LoginRequest
+import io.github.bigreddog33.homeharmony.data.account.dto.CreateAccountRequest
 import io.github.bigreddog33.homeharmony.data.network.ApiClient
 import io.github.bigreddog33.homeharmony.data.network.ApiResult
 import io.github.bigreddog33.homeharmony.data.network.apiCall
 
 import kotlinx.coroutines.launch
 
-class LoginViewModel(
+class CreateAccountViewModel(
     private val accountApi: AccountApi = ApiClient.create(AccountApi::class.java)
 ) : ViewModel() {
-
-    var uiState by mutableStateOf(LoginUiState())
+    var uiState by mutableStateOf(CreateAccountUiState())
         private set
 
     fun onEmailChange(email: String) {
-        uiState = uiState.copy(email = email, emailError = null, loginError = null)
+        uiState = uiState.copy(email = email, emailError = null, emailConfirmError = null, createAccountError = null)
+    }
+
+    fun onEmailConfirmChange(emailConfirm: String) {
+        uiState = uiState.copy(emailConfirm = emailConfirm, emailConfirmError = null, createAccountError = null)
     }
 
     fun onPasswordChange(password: String) {
-        uiState = uiState.copy(password = password, passwordError = null, loginError = null)
+        uiState = uiState.copy(password = password, passwordError = null, passwordConfirmError = null, createAccountError = null)
+    }
+
+    fun onPasswordConfirmChange(passwordConfirm: String) {
+        uiState = uiState.copy(passwordConfirm = passwordConfirm, passwordConfirmError = null, createAccountError = null)
     }
 
     fun onSnackbarShown() {
         uiState = uiState.copy(snackbarMessage = null)
     }
 
-    fun login() {
-        if (uiState.isLoading || uiState.isLoginSuccessful) return
+    fun createAccount() {
+        if (uiState.isLoading || uiState.isCreateAccountSuccessful) return
 
-        val validation = validateLogin(uiState.email, uiState.password)
+        val validation = validateCreateAccount(uiState.email, uiState.password, uiState.emailConfirm, uiState.passwordConfirm)
         uiState = uiState.copy(
             emailError = validation.email,
             passwordError = validation.password,
-            loginError = null,
+            emailConfirmError = validation.emailConfirm,
+            passwordConfirmError = validation.passwordConfirm,
+            createAccountError = null,
             snackbarMessage = null
         )
         if (!validation.isValid) return
@@ -52,21 +61,23 @@ class LoginViewModel(
 
         viewModelScope.launch {
             val result = try {
-                apiCall { accountApi.login(LoginRequest(email, password)) }
+                apiCall { accountApi.createAccount(CreateAccountRequest(email, password)) }
             } finally {
                 uiState = uiState.copy(isLoading = false)
             }
 
             when (result) {
                 is ApiResult.Success -> {
-                    uiState = uiState.copy(isLoginSuccessful = true)
+                    uiState = uiState.copy(isCreateAccountSuccessful = true)
                 }
 
                 is ApiResult.HttpError -> {
                     uiState = when (result.code) {
-                        400 -> uiState.copy(loginError = R.string.login_invalid_request)
-                        401 -> uiState.copy(loginError = R.string.login_invalid_credentials)
-                        else -> uiState.copy(snackbarMessage = R.string.login_server_error)
+                        400 -> uiState.copy(createAccountError = R.string.createAccount_invalid_request)
+                        401, 403 -> uiState.copy(createAccountError = R.string.createAccount_failed)
+                        409 -> uiState.copy(createAccountError = R.string.createAccount_email_in_use)
+                        429 -> uiState.copy(snackbarMessage = R.string.too_many_requests)
+                        else -> uiState.copy(snackbarMessage = R.string.createAccount_server_error)
                     }
                 }
 

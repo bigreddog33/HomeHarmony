@@ -1,20 +1,36 @@
 <resources>
     <string name="app_name">Home Harmony</string>
+    <string name="unexpected_error">Something went wrong. Please try again.</string>
+    <string name="network_error">Could not connect. Check your connection and try again.</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Password</string>
+    <string name="email_confirm_label">Confirm email</string>
+    <string name="password_confirm_label">Confirm password</string>
+    <string name="email_required">Email is required.</string>
+    <string name="email_invalid">Enter a valid email address.</string>
+    <string name="password_required">Password is required.</string>
+    <string name="too_many_requests">Too many attempts. Please wait a moment and try again.</string>
+    <string name="forgot_password">Forgot password</string>
+    <string name="policies_terms">Policies and terms</string>
+
     <string name="login_welcome">Welcome home</string>
-    <string name="login_subtitle">Log in to HomeHarmony.</string>
-    <string name="login_email_label">Email</string>
-    <string name="login_password_label">Password</string>
+    <string name="login_subtitle">Log in to Home Harmony.</string>
     <string name="login_button">Log in</string>
     <string name="login_loading">Logging in</string>
-    <string name="login_create_user">Create user</string>
-    <string name="login_forgot_password">Forgot password</string>
-    <string name="login_policies_terms">Policies and terms</string>
-    <string name="login_email_required">Email is required.</string>
-    <string name="login_email_invalid">Enter a valid email address.</string>
-    <string name="login_password_required">Password is required.</string>
     <string name="login_invalid_credentials">Invalid email or password.</string>
-    <string name="login_invalid_request">Check your email and password, then try again.</string>
-    <string name="login_network_error">Could not connect. Check your connection and try again.</string>
+    <string name="login_invalid_request">Check your email and password, then try again.</string>    
     <string name="login_server_error">Unable to log in right now. Please try again later.</string>
-    <string name="login_unexpected_error">Something went wrong. Please try again.</string>
+
+    <string name="createAccount_welcome">Let\'s get started</string>
+    <string name="createAccount_subtitle">Create your Home Harmony account.</string>
+    <string name="createAccount_button">Create account</string>
+    <string name="createAccount_loading">Creating account</string>
+    <string name="createAccount_login">Back to log in</string>
+    <string name="createAccount_email_not_matching">Email addresses do not match.</string>
+    <string name="createAccount_password_rules">Use at least 8 characters, including an uppercase letter (A–Z), a number (0–9), and a punctuation mark or symbol.</string>
+    <string name="createAccount_password_not_matching">Passwords do not match.</string>
+    <string name="createAccount_invalid_request">Check your email and password requirements, then try again.</string>
+    <string name="createAccount_failed">Unable to complete account creation. Check your details and try again.</string>
+    <string name="createAccount_email_in_use">An account with this email already exists. Log in or use a different email.</string>
+    <string name="createAccount_server_error">Unable to create an account right now. Please try again later.</string>
 </resources>

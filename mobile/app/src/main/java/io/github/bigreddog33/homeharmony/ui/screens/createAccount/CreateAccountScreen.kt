@@ -1,4 +1,4 @@
-package io.github.bigreddog33.homeharmony.ui.screens.login
+package io.github.bigreddog33.homeharmony.ui.screens.createAccount
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -42,23 +42,23 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 
 @Composable
-fun LoginScreen(
-    onLoginSuccess: () -> Unit,
-    onCreateAccountClick: () -> Unit,
-    viewModel: LoginViewModel = viewModel()
+fun CreateAccountScreen(
+    onCreateAccountSuccess: () -> Unit,
+    onBackToLoginClick: () -> Unit,
+    viewModel: CreateAccountViewModel = viewModel()
 ) {
     val state = viewModel.uiState
     val focusManager = LocalFocusManager.current
     val snackbarHostState = remember { SnackbarHostState() }
     val snackbarMessage = state.snackbarMessage?.let { stringResource(it) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val currentOnLoginSuccess by rememberUpdatedState(onLoginSuccess)
+    val currentOnCreateAccountSuccess by rememberUpdatedState(onCreateAccountSuccess)
 
     LaunchedEffect(viewModel, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            snapshotFlow { viewModel.uiState.isLoginSuccessful }
+            snapshotFlow { viewModel.uiState.isCreateAccountSuccessful }
                 .filter { it }
-                .collect { currentOnLoginSuccess() }
+                .collect { currentOnCreateAccountSuccess() }
         }
     }
 
@@ -80,7 +80,7 @@ fun LoginScreen(
                     detectTapGestures { focusManager.clearFocus() }
                 }
         ) {
-            LoginBackground()
+            CreateAccountBackground()
 
             Column(
                 modifier = Modifier
@@ -96,18 +96,20 @@ fun LoginScreen(
                         .fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    LoginHeader()
-                    LoginForm(
+                    CreateAccountHeader()
+                    CreateAccountForm(
                         state = state,
                         onEmailChange = viewModel::onEmailChange,
+                        onEmailConfirmChange = viewModel::onEmailConfirmChange,
                         onPasswordChange = viewModel::onPasswordChange,
-                        onLoginClick = {
+                        onPasswordConfirmChange = viewModel::onPasswordConfirmChange,
+                        onCreateAccountClick = {
                             focusManager.clearFocus()
-                            viewModel.login()
+                            viewModel.createAccount()
                         },
-                        onCreateAccountClick = onCreateAccountClick
+                        onBackToLoginClick = onBackToLoginClick
                     )
-                    LoginFooter()
+                    CreateAccountFooter()
                 }
             }
         }
@@ -115,7 +117,7 @@ fun LoginScreen(
 }
 
 @Composable
-private fun LoginBackground() {
+private fun CreateAccountBackground() {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val decorationAlpha = if (isDark) 0.2f else 0.35f
 
@@ -151,16 +153,16 @@ private fun LoginBackground() {
 }
 
 @Composable
-private fun LoginHeader() {
+private fun CreateAccountHeader() {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = stringResource(R.string.login_welcome),
+            text = stringResource(R.string.createAccount_welcome),
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = stringResource(R.string.login_subtitle),
+            text = stringResource(R.string.createAccount_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -168,12 +170,14 @@ private fun LoginHeader() {
 }
 
 @Composable
-private fun LoginForm(
-    state: LoginUiState,
+private fun CreateAccountForm(
+    state: CreateAccountUiState,
     onEmailChange: (String) -> Unit,
+    onEmailConfirmChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
-    onLoginClick: () -> Unit,
-    onCreateAccountClick: () -> Unit
+    onPasswordConfirmChange: (String) -> Unit,
+    onCreateAccountClick: () -> Unit,
+    onBackToLoginClick: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -201,26 +205,74 @@ private fun LoginForm(
         )
 
         OutlinedTextField(
+            value = state.emailConfirm,
+            onValueChange = onEmailConfirmChange,
+            label = { Text(stringResource(R.string.email_confirm_label)) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading,
+            isError = state.emailConfirmError != null,
+            supportingText = state.emailConfirmError?.let { error ->
+                { Text(stringResource(error)) }
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            ),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        OutlinedTextField(
             value = state.password,
             onValueChange = onPasswordChange,
             label = { Text(stringResource(R.string.password_label)) },
             modifier = Modifier.fillMaxWidth(),
             enabled = !state.isLoading,
             isError = state.passwordError != null,
-            supportingText = state.passwordError?.let { error ->
+            supportingText = {
+                Text(stringResource(state.passwordError ?: R.string.createAccount_password_rules))
+            },
+            visualTransformation = PasswordVisualTransformation(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            ),
+            shape = MaterialTheme.shapes.medium
+        )
+
+        OutlinedTextField(
+            value = state.passwordConfirm,
+            onValueChange = onPasswordConfirmChange,
+            label = { Text(stringResource(R.string.password_confirm_label)) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading,
+            isError = state.passwordConfirmError != null,
+            supportingText = state.passwordConfirmError?.let { error ->
                 { Text(stringResource(error)) }
             },
             visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(
+                autoCorrectEnabled = false,
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
             ),
-            keyboardActions = KeyboardActions(onDone = { onLoginClick() }),
+            keyboardActions = KeyboardActions(onDone = { onCreateAccountClick() }),
             shape = MaterialTheme.shapes.medium
         )
 
-        state.loginError?.let { error ->
+        state.createAccountError?.let { error ->
             Text(
                 text = stringResource(error),
                 color = MaterialTheme.colorScheme.error,
@@ -229,10 +281,10 @@ private fun LoginForm(
             )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Button(
-            onClick = onLoginClick,
+            onClick = onCreateAccountClick,
             enabled = !state.isLoading,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = MaterialTheme.shapes.medium
@@ -247,20 +299,20 @@ private fun LoginForm(
             }
             Text(
                 text = stringResource(
-                    if (state.isLoading) R.string.login_loading else R.string.login_button
+                    if (state.isLoading) R.string.createAccount_loading else R.string.createAccount_button
                 ),
                 style = MaterialTheme.typography.titleSmall
             )
         }
 
         OutlinedButton(
-            onClick = onCreateAccountClick,
+            onClick = onBackToLoginClick,
             enabled = !state.isLoading,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = MaterialTheme.shapes.medium
         ) {
             Text(
-                text = stringResource(R.string.createAccount_button),
+                text = stringResource(R.string.createAccount_login),
                 style = MaterialTheme.typography.titleSmall
             )
         }
@@ -268,11 +320,8 @@ private fun LoginForm(
 }
 
 @Composable
-private fun LoginFooter() {
+private fun CreateAccountFooter() {
     Column {
-        TextButton(onClick = {}) {
-            Text(stringResource(R.string.forgot_password))
-        }
         TextButton(onClick = {}) {
             Text(
                 text = stringResource(R.string.policies_terms),

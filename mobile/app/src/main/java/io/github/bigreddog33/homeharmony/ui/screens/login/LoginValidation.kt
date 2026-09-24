@@ -14,14 +14,14 @@ data class LoginValidationErrors(
 
 fun validateLogin(email: String, password: String): LoginValidationErrors {
     val emailError = when {
-        email.isBlank() -> R.string.login_email_required
+        email.isBlank() -> R.string.email_required
         !PatternsCompat.EMAIL_ADDRESS.matcher(email.trim()).matches() ->
-            R.string.login_email_invalid
+            R.string.email_invalid
         else -> null
     }
 
     return LoginValidationErrors(
         email = emailError,
-        password = if (password.isBlank()) R.string.login_password_required else null
+        password = if (password.isBlank()) R.string.password_required else null
     )
 }
