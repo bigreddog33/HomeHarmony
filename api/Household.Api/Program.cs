@@ -5,13 +5,30 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<UserIdentityDbContext>(options => options.UseSqlServer(connectionString));
-builder.Services.AddIdentityApiEndpoints<ApplicationIdentityUser>(options => { options.SignIn.RequireConfirmedEmail = true; }).AddEntityFrameworkStores<UserIdentityDbContext>();
+
+builder.Services
+    .AddIdentityApiEndpoints<ApplicationIdentityUser>(options => { 
+        options.SignIn.RequireConfirmedEmail = true;
+        options.User.RequireUniqueEmail = true;
+
+        options.Password.RequiredLength=8;
+        options.Password.RequireUppercase=true;
+        options.Password.RequireDigit=true;
+        options.Password.RequireNonAlphanumeric=true;
+        options.Password.RequireLowercase=false; 
+
+        options.Lockout.MaxFailedAccessAttempts=5;
+        options.Lockout.DefaultLockoutTimeSpan=TimeSpan.FromMinutes(15);
+        options.Lockout.AllowedForNewUsers=true;
+        })
+    .AddEntityFrameworkStores<UserIdentityDbContext>();
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
-builder.Services.AddScoped<IAccountService, MockAccountService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("WebClient", policy =>
@@ -32,7 +49,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.MapOpenApi();
-}
+} 
 else
 {
     app.UseExceptionHandler();
