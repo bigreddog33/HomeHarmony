@@ -1,6 +1,12 @@
 using Household.Api.Features.Account.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContext<UserIdentityDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddIdentityApiEndpoints<ApplicationIdentityUser>(options => { options.SignIn.RequireConfirmedEmail = true; }).AddEntityFrameworkStores<UserIdentityDbContext>();
+builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
