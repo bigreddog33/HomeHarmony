@@ -1,9 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using Household.Api.Features.Account.Contracts;
 using Household.Api.Tests.Features.Account.Data;
 using Household.Api.Tests.Features.Account.Support;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using static Household.Api.Tests.Features.Account.Data.AccountRegistrationCases;
 
@@ -37,8 +39,7 @@ public sealed class AccountRegistrationIntegrationTests : IDisposable
         using var response = await _client.PostAsJsonAsync(CreatePath,
             new { email = "user@example.com", password });
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Empty(await response.Content.ReadAsByteArrayAsync());
+        await AssertCreateUserResponse(response, HttpStatusCode.Created, CreateUserStatus.Created);
         var request = Assert.IsType<CreateUserRequest>(
             Assert.Single(_factory.Service.Calls).Request);
         Assert.Equal("user@example.com", request.Email);
@@ -62,8 +63,15 @@ public sealed class AccountRegistrationIntegrationTests : IDisposable
         using var response = await _client.PostAsJsonAsync(path,
             new { email, password = "Password123!" });
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Empty(await response.Content.ReadAsByteArrayAsync());
+        if (path == CreatePath)
+        {
+            await AssertCreateUserResponse(response, HttpStatusCode.Created, CreateUserStatus.Created);
+        }
+        else
+        {
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Empty(await response.Content.ReadAsByteArrayAsync());
+        }
         var request = Assert.Single(_factory.Service.Calls).Request;
         var boundEmail = request switch
         {
@@ -96,15 +104,73 @@ public sealed class AccountRegistrationIntegrationTests : IDisposable
     }
 
     [Theory]
-    [ClassData(typeof(AccountRegistrationCases.Endpoints))]
-    public async Task Endpoint_WhenServiceReturnsFalse_ReturnsUnauthorized(string path)
+    [ClassData(typeof(AccountRegistrationCases.CreateUserResults))]
+    public async Task CreateUser_ReturnsServiceStatusAsJson(CreateUserStatus serviceStatus, HttpStatusCode expectedStatus)
     {
-        _factory.Service.Result = false;
+        _factory.Service.CreateResult = serviceStatus == CreateUserStatus.CreatedConfirmationFailed
+            ? new(serviceStatus, ConfirmationStatus: SendConfirmationStatus.Failed)
+            : new(serviceStatus);
 
-        using var response = await _client.PostAsJsonAsync(path, ValidBody());
+        using var response = await _client.PostAsJsonAsync(CreatePath, ValidBody());
 
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await AssertCreateUserResponse(response, expectedStatus, serviceStatus);
         Assert.Single(_factory.Service.Calls);
+    }
+
+    [Fact]
+    public async Task CreateUser_WhenServiceRejectsRequest_ReturnsIdentityErrorsAsJson()
+    {
+        _factory.Service.CreateResult = new(
+            CreateUserStatus.ValidationFailed,
+            IdentityResult: IdentityResult.Failed(
+                new IdentityError
+                {
+                    Code = "PasswordTooShort",
+                    Description = "Password must contain at least 8 characters."
+                },
+                new IdentityError
+                {
+                    Code = "PasswordRequiresDigit",
+                    Description = "Password must contain at least one digit."
+                }));
+
+        // A valid HTTP request reaches the stub, which supplies the Identity failure.
+        using var response = await _client.PostAsJsonAsync(CreatePath, ValidBody());
+
+        var body = await AssertCreateUserResponse(
+            response, HttpStatusCode.BadRequest, CreateUserStatus.ValidationFailed);
+        Assert.Collection(body.GetProperty("errors").EnumerateArray(),
+            error =>
+            {
+                Assert.Equal("PasswordTooShort", error.GetProperty("code").GetString());
+                Assert.Equal("Password must contain at least 8 characters.", error.GetProperty("description").GetString());
+            },
+            error =>
+            {
+                Assert.Equal("PasswordRequiresDigit", error.GetProperty("code").GetString());
+                Assert.Equal("Password must contain at least one digit.", error.GetProperty("description").GetString());
+            });
+        Assert.Single(_factory.Service.Calls);
+    }
+
+    [Theory]
+    [ClassData(typeof(AccountRegistrationCases.ResendConfirmationResults))]
+    public async Task ResendConfirmation_ReturnsExpectedHttpStatus(
+        SendConfirmationStatus serviceStatus, HttpStatusCode expectedStatus)
+    {
+        _factory.Service.ConfirmationResult = serviceStatus;
+
+        using var response = await _client.PostAsJsonAsync(ResendPath,
+            new ResendConfirmationRequest("user@example.com"));
+
+        Assert.Equal(expectedStatus, response.StatusCode);
+        var request = Assert.IsType<ResendConfirmationRequest>(
+            Assert.Single(_factory.Service.Calls).Request);
+        Assert.Equal("user@example.com", request.Email);
+        if (expectedStatus == HttpStatusCode.OK)
+        {
+            Assert.Empty(await response.Content.ReadAsByteArrayAsync());
+        }
     }
 
     [Theory]
@@ -114,7 +180,7 @@ public sealed class AccountRegistrationIntegrationTests : IDisposable
         const string privateDetail = "Private provider connection details";
         Exception failure = failureKind == ServiceFailure.Timeout
             ? new TimeoutException(privateDetail) : new InvalidOperationException(privateDetail);
-        _factory.Service.OnCall = _ => Task.FromException<bool>(failure);
+        _factory.Service.OnCall = _ => Task.FromException(failure);
 
         using var response = await _client.PostAsJsonAsync(path, ValidBody());
 
@@ -140,7 +206,6 @@ public sealed class AccountRegistrationIntegrationTests : IDisposable
             try
             {
                 await Task.Delay(Timeout.InfiniteTimeSpan, token);
-                return true;
             }
             catch (OperationCanceledException) when (token.IsCancellationRequested)
             {
@@ -167,6 +232,21 @@ public sealed class AccountRegistrationIntegrationTests : IDisposable
     }
 
     private static object ValidBody() => new { email = "user@example.com", password = "Password123!" };
+
+    private static async Task<JsonElement> AssertCreateUserResponse(
+        HttpResponseMessage response, HttpStatusCode expectedStatus, CreateUserStatus expectedOutcome)
+    {
+        Assert.Equal(expectedStatus, response.StatusCode);
+        Assert.Equal("application/json", response.Content.Headers.ContentType?.MediaType);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        // Inspect the actual JSON: clients should receive a status name, not an enum number.
+        Assert.Equal(expectedOutcome.ToString(), body.GetProperty("status").GetString());
+        if (expectedOutcome != CreateUserStatus.ValidationFailed)
+        {
+            Assert.Equal(JsonValueKind.Null, body.GetProperty("errors").ValueKind);
+        }
+        return body;
+    }
 
     private async Task AssertValidationProblem(HttpResponseMessage response, string? field = null)
     {
