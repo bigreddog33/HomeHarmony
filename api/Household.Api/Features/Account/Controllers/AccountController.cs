@@ -59,9 +59,9 @@ public sealed class AccountController(IAccountService accountService) : Controll
     [AllowAnonymous]
     [HttpPost("resendconfirmation")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> ResendConfirmation(
         ResendConfirmationRequest request,
         CancellationToken cancellationToken)
@@ -70,7 +70,11 @@ public sealed class AccountController(IAccountService accountService) : Controll
         //since they both do the same thing, but from different locations
         var result = await accountService.SendConfirmationAsync(request, cancellationToken);
 
-        if (result==SendConfirmationStatus.Sent) return StatusCode(StatusCodes.Status200OK);
+        if (result == SendConfirmationStatus.Sent || result == SendConfirmationStatus.AlreadyConfirmed)
+            return StatusCode(StatusCodes.Status200OK);
+
+        if (result == SendConfirmationStatus.UserNotFound)
+            return StatusCode(StatusCodes.Status404NotFound);
         
         return StatusCode(StatusCodes.Status500InternalServerError);
     }

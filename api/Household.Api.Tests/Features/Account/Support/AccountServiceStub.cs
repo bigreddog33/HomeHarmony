@@ -3,31 +3,41 @@ using Household.Api.Features.Account.Services;
 
 namespace Household.Api.Tests.Features.Account.Support;
 
-// A test-controlled IAccountService. It contains no account or email rules.
-// Tests choose the result (or supply asynchronous behavior) and inspect the calls
-// to check what the controller forwarded. Only test code registers this service.
 internal sealed class AccountServiceStub : IAccountService
 {
-    public bool Result { get; set; } = true;
+    public bool LoginResult { get; set; } = true;
+    public CreateUserResult CreateResult { get; set; } = new (CreateUserStatus.Created);
+    public SendConfirmationStatus ConfirmationResult { get; set; } = SendConfirmationStatus.Sent;
 
-    // Used by failure/cancellation tests to throw or wait until the token is cancelled.
-    public Func<CancellationToken, Task<bool>>? OnCall { get; set; }
-
+    public Func<CancellationToken, Task>? OnCall { get; set; }
     public List<(object Request, CancellationToken Token)> Calls { get; } = [];
 
-    public Task<bool> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken) =>
-        Invoke(request, cancellationToken);
+    public async Task<CreateUserResult> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken)
+    {
+        await RecordCallAsync(request, cancellationToken);
+        return CreateResult;
+    }
 
-    public Task<bool> SendConfirmationAsync(ResendConfirmationRequest request, CancellationToken cancellationToken) =>
-        Invoke(request, cancellationToken);
+    public async Task<SendConfirmationStatus> SendConfirmationAsync(ResendConfirmationRequest request, CancellationToken cancellationToken)
+    {
+        await RecordCallAsync(request, cancellationToken);
+        return ConfirmationResult;
+    }
 
-    public Task<bool> LoginAsync(LoginRequest request, CancellationToken cancellationToken) =>
-        Invoke(request, cancellationToken);
+    public async Task<bool> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
+    {
+        await RecordCallAsync(request, cancellationToken);
+        return LoginResult;
+    }
 
-    private Task<bool> Invoke(object request, CancellationToken cancellationToken)
+    private async Task RecordCallAsync(object request, CancellationToken cancellationToken)
     {
         Calls.Add((request, cancellationToken));
         cancellationToken.ThrowIfCancellationRequested();
-        return OnCall?.Invoke(cancellationToken) ?? Task.FromResult(Result);
+
+        if (OnCall is not null)
+        {
+            await OnCall(cancellationToken);
+        }
     }
 }
