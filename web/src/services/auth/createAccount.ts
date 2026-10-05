@@ -1,10 +1,10 @@
 import type { CreateAccountRequest } from "@/contracts/auth/CreateAccountRequest";
 import { ApiError, postJson } from "@/services/apiClient";
 
-export type CreateAccountFailure = "creation-failed" | "invalid-request";
+export type CreateAccountFailure = "creation-failed" | "invalid-request" | "already-exists";
 
 export class CreateAccountApiError extends Error {
-    constructor(public readonly failure: CreateAccountFailure) {
+    constructor(public readonly failure: CreateAccountFailure, public readonly emailConfirmed?: boolean) {
         super(failure);
         this.name = "CreateAccountApiError";
     }
@@ -25,6 +25,13 @@ export async function createAccount(request: CreateAccountRequest): Promise<void
 
         if (error.status === 400) {
             throw new CreateAccountApiError("invalid-request");
+        }
+
+        if (error.status === 409) {
+            const body = error.body;
+            const emailConfirmed = typeof body === "object" && body !=null && "emailConfirmed" in body && (typeof body.emailConfirmed === "boolean" ? body.emailConfirmed : undefined);
+
+            throw new CreateAccountApiError("already-exists", emailConfirmed);
         }
 
         throw error;

@@ -19,8 +19,10 @@ public enum SendConfirmationStatus
 public record CreateUserResult(
     CreateUserStatus Status,
     IdentityResult? IdentityResult = null,
-    SendConfirmationStatus? ConfirmationStatus = null);
+    SendConfirmationStatus? ConfirmationStatus = null,
+    bool? EmailConfirmed = null);
 
 public record CreateUserResponse(
     CreateUserStatus Status,
-    IEnumerable<IdentityError>? Errors = null);
+    IEnumerable<IdentityError>? Errors = null,
+    bool? EmailConfirmed = null);

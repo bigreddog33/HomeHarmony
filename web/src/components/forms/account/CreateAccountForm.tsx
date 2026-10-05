@@ -107,6 +107,11 @@ export default function CreateAccountForm() {
                     setAccountError("Check your email and password, then try again.");
                     return;
                 }
+
+                if (error.failure === "already-exists") {
+                    setAccountError("There is already an account existing with this email");
+                    return;
+                }
             }
 
             setToastMessage("An unexpected error occurred. Please try again.");

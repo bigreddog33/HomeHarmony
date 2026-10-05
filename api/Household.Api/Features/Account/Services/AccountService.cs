@@ -35,7 +35,7 @@ public class AccountService : IAccountService
         cancellationToken.ThrowIfCancellationRequested();
 
         var existingUser = await _userManager.FindByEmailAsync(request.Email);
-        if (existingUser is not null) return new(CreateUserStatus.AlreadyExists);
+        if (existingUser is not null) return new(CreateUserStatus.AlreadyExists, EmailConfirmed: existingUser.EmailConfirmed);
 
         var user = new ApplicationIdentityUser { UserName = request.Email, Email = request.Email };
         var identityResult = await _userManager.CreateAsync(user, request.Password);
@@ -45,7 +45,8 @@ public class AccountService : IAccountService
                     error => error.Code is nameof(IdentityErrorDescriber.DuplicateEmail) or nameof(IdentityErrorDescriber.DuplicateUserName)
                 );
 
-            return new(isDuplicate ? CreateUserStatus.AlreadyExists : CreateUserStatus.ValidationFailed, IdentityResult: identityResult);
+            var duplicateUser = await _userManager.FindByEmailAsync(request.Email);
+            return new(isDuplicate ? CreateUserStatus.AlreadyExists : CreateUserStatus.ValidationFailed, IdentityResult: identityResult, EmailConfirmed: duplicateUser?.EmailConfirmed);
         }
 
         var confirmationResult = await SendConfirmationAsync(new ResendConfirmationRequest(request.Email), cancellationToken);

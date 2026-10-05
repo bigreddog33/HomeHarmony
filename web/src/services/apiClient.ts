@@ -4,6 +4,7 @@ export class ApiError extends Error {
   constructor(
     public readonly failure: ApiFailure,
     public readonly status?: number,
+    public readonly body?: unknown,
   ) {
     super(failure);
     this.name = "ApiError";
@@ -38,9 +39,11 @@ export async function postJson(path: string, body: unknown): Promise<void> {
     );
 
     if (!response.ok) {
-      throw new ApiError("http", response.status);
+      const body: unknown = await response.json().catch(() => undefined);
+      throw new ApiError("http", response.status, body);
     }
-  } catch (error) {
+  }
+  catch (error) {
     if (error instanceof ApiError) {
       throw error;
     }
@@ -50,7 +53,8 @@ export async function postJson(path: string, body: unknown): Promise<void> {
     }
 
     throw new ApiError("network");
-  } finally {
+  }
+  finally {
     clearTimeout(timeoutId);
   }
 }

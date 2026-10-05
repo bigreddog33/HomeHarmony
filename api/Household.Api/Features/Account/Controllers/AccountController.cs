@@ -46,7 +46,8 @@ public sealed class AccountController(IAccountService accountService) : Controll
 
         if (result.Status == CreateUserStatus.AlreadyExists) return Conflict(
                 new CreateUserResponse(
-                    result.Status));
+                    result.Status,
+                    EmailConfirmed: result.EmailConfirmed));
 
         if (result.Status == CreateUserStatus.ValidationFailed) return BadRequest(
                 new CreateUserResponse(
