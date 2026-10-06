@@ -18,7 +18,7 @@ const submit = vi.mocked(createAccount);
 
 beforeEach(() => {
   submit.mockReset();
-  submit.mockResolvedValue(undefined);
+  submit.mockResolvedValue({ status: "Created" });
 });
 
 describe.each(confirmationPairs)("$field confirmation revalidation", ({ field, label, confirmationLabel, different, error }) => {

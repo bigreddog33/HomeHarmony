@@ -11,10 +11,10 @@ const request = loginValues({ password: " Password1! " });
 const fetchMock = stubApi();
 
 describe("create account API", () => {
-  it("posts to the creation endpoint and accepts an empty success response", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+  it("posts to the creation endpoint and returns the creation status", async () => {
+    fetchMock.mockResolvedValue(Response.json({ status: "Created" }, { status: 201 }));
 
-    await expect(createAccount(request)).resolves.toBeUndefined();
+    await expect(createAccount(request)).resolves.toEqual({ status: "Created" });
 
     expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
       "http://localhost:5000/api/account/createuser",

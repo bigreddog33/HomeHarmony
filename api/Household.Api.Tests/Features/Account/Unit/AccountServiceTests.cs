@@ -50,6 +50,7 @@ public sealed class AccountServiceTests : IDisposable
     public async Task CreateUser_WhenIdentityDetectsDuplicateAfterLookup_ReturnsAlreadyExists(string errorCode)
     {
         _userManager.FindResults.Enqueue(null);
+        _userManager.FindResults.Enqueue(new ApplicationIdentityUser { Email = _request.Email });
         _userManager.CreateResult = IdentityResult.Failed(new IdentityError
         {
             Code = errorCode,
@@ -61,7 +62,7 @@ public sealed class AccountServiceTests : IDisposable
         Assert.Equal(CreateUserStatus.AlreadyExists, result.Status);
         Assert.Same(_userManager.CreateResult, result.IdentityResult);
         Assert.Single(_userManager.CreateCalls);
-        Assert.Single(_userManager.EmailLookups);
+        Assert.Equal(new[] { _request.Email, _request.Email }, _userManager.EmailLookups);
         Assert.Empty(_userManager.ConfirmationCalls);
     }
 

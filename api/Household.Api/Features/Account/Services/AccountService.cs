@@ -45,8 +45,10 @@ public class AccountService : IAccountService
                     error => error.Code is nameof(IdentityErrorDescriber.DuplicateEmail) or nameof(IdentityErrorDescriber.DuplicateUserName)
                 );
 
+            if (!isDuplicate) return new(CreateUserStatus.ValidationFailed, IdentityResult: identityResult);
+
             var duplicateUser = await _userManager.FindByEmailAsync(request.Email);
-            return new(isDuplicate ? CreateUserStatus.AlreadyExists : CreateUserStatus.ValidationFailed, IdentityResult: identityResult, EmailConfirmed: duplicateUser?.EmailConfirmed);
+            return new(CreateUserStatus.AlreadyExists, IdentityResult: identityResult, EmailConfirmed: duplicateUser?.EmailConfirmed);
         }
 
         var confirmationResult = await SendConfirmationAsync(new ResendConfirmationRequest(request.Email), cancellationToken);
