@@ -1,4 +1,5 @@
 import type { CreateAccountRequest } from "@/contracts/auth/CreateAccountRequest";
+import { CreateAccountResponse } from "@/contracts/auth/CreateAccountResponse";
 import { ApiError, postJson } from "@/services/apiClient";
 
 export type CreateAccountFailure = "creation-failed" | "invalid-request" | "already-exists";
@@ -10,9 +11,20 @@ export class CreateAccountApiError extends Error {
     }
 }
 
-export async function createAccount(request: CreateAccountRequest): Promise<void> {
+export async function createAccount(request: CreateAccountRequest): Promise<CreateAccountResponse> {
     try {
-        await postJson("/api/account/createuser", request);
+        const body = await postJson("/api/account/createuser", request, true);
+
+        if (
+            typeof body !== "object" ||
+            body === null ||
+            !("status" in body) ||
+            (body.status !== "Created" && body.status !== "CreatedConfirmationFailed")
+        ) {
+            throw new Error("Unexpected account creation response.");
+        }
+
+        return { status: body.status };
     } catch (error) {
         if (!(error instanceof ApiError)) {
             throw error;
@@ -29,7 +41,7 @@ export async function createAccount(request: CreateAccountRequest): Promise<void
 
         if (error.status === 409) {
             const body = error.body;
-            const emailConfirmed = typeof body === "object" && body !=null && "emailConfirmed" in body && (typeof body.emailConfirmed === "boolean" ? body.emailConfirmed : undefined);
+            const emailConfirmed = typeof body === "object" && body != null && "emailConfirmed" in body && typeof body.emailConfirmed === "boolean" ? body.emailConfirmed : undefined;
 
             throw new CreateAccountApiError("already-exists", emailConfirmed);
         }
