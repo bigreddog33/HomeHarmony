@@ -68,7 +68,12 @@ class CreateAccountViewModel(
 
             when (result) {
                 is ApiResult.Success -> {
-                    uiState = uiState.copy(isCreateAccountSuccessful = true)
+                    val status = result.value.status
+                    
+                    uiState = when (status) { 
+                        "Created", "CreatedConfirmationFailed" -> uiState.copy(isCreateAccountSuccessful=true, confirmationStatus=status, confirmationEmail = email)
+                        else -> uiState.copy(snackbarMessage = R.string.unexpected_error)
+                    }
                 }
 
                 is ApiResult.HttpError -> {

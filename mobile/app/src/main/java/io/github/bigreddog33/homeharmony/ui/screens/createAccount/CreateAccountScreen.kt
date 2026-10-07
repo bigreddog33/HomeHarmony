@@ -43,7 +43,7 @@ import kotlinx.coroutines.flow.filter
 
 @Composable
 fun CreateAccountScreen(
-    onCreateAccountSuccess: () -> Unit,
+    onCreateAccountSuccess: (email: String, status: String) -> Unit,
     onBackToLoginClick: () -> Unit,
     viewModel: CreateAccountViewModel = viewModel()
 ) {
@@ -56,9 +56,12 @@ fun CreateAccountScreen(
 
     LaunchedEffect(viewModel, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            snapshotFlow { viewModel.uiState.isCreateAccountSuccessful }
-                .filter { it }
-                .collect { currentOnCreateAccountSuccess() }
+            snapshotFlow { viewModel.uiState }
+                .filter { it.isCreateAccountSuccessful }
+                .collect { successState -> 
+                    val email = successState.confirmationEmail?: return@collect
+                    val status = successState.confirmationStatus?: return@collect
+                    currentOnCreateAccountSuccess(email,status) }
         }
     }
 

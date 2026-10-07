@@ -1,6 +1,9 @@
 package io.github.bigreddog33.homeharmony.ui.navigation
 
 import androidx.compose.runtime.Composable
+import android.net.Uri
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -40,11 +43,14 @@ fun AppNavigation() {
         
         composable("createAccount") {
             CreateAccountScreen(
-                onCreateAccountSuccess = {
-                    navController.navigate("successCreateAccount") {
+                onCreateAccountSuccess = { email, status ->
+                    val route = "successCreateAccount/${Uri.encode(email)}/${Uri.encode(status)}"
+
+                    navController.navigate(route) {
                         popUpTo("createAccount") {
                             inclusive = true
                         }
+                        launchSingleTop = true
                     }
                 },
                 onBackToLoginClick = {
@@ -53,8 +59,19 @@ fun AppNavigation() {
             )
         }
 
-        composable("successCreateAccount") {
-            SuccessCreateAccountScreen()
+        composable(
+            route = "successCreateAccount/{email}/{status}",
+            arguments = listOf(navArgument("email") {type = NavType.StringType},navArgument("status") {type = NavType.StringType})
+            ) {
+                backStackEntry -> 
+                    val email = requireNotNull(backStackEntry.arguments?.getString("email"))
+                    val status = requireNotNull(backStackEntry.arguments?.getString("status"))
+                    
+                SuccessCreateAccountScreen(
+                    email=email,
+                    status=status,
+                    onBackToLoginClick = {navController.popBackStack("login", false)}    
+                )
         }
     }
 }

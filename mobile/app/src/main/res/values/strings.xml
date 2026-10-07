@@ -33,4 +33,18 @@
     <string name="createAccount_failed">Unable to complete account creation. Check your details and try again.</string>
     <string name="createAccount_email_in_use">An account with this email already exists. Log in or use a different email.</string>
     <string name="createAccount_server_error">Unable to create an account right now. Please try again later.</string>
+
+    <string name="confirmation_account_created">Account created</string>
+    <string name="confirmation_title">Check your inbox</string>
+    <string name="confirmation_sent">Follow the confirmation link in your email to activate your account before logging in for the first time.</string>
+    <string name="confirmation_failed">Your account was created, but we could not send your confirmation email.</string>
+    <string name="confirmation_email">Account email: %1$s</string>
+    <string name="confirmation_inbox_hint">It may take a few minutes to arrive. Check your spam or junk folder, too.</string>
+    <string name="confirmation_failed_hint">You do not need to create your account again.</string>
+    <string name="confirmation_go_to_login">Go to login</string>
+
+    <string name="confirmation_resend_failed">Could not process your confirmation request. Please try again later.</string>
+    <string name="confirmation_resend_button">Resend confirmation link</string>
+    <string name="confirmation_resending">Requesting confirmation…</string>
+    <string name="confirmation_resend_success">Your confirmation request was processed. Check your inbox; if your email is already confirmed, you can log in.</string>
 </resources>
