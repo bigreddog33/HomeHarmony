@@ -50,7 +50,7 @@ export default function SuccessCreateAccountPage() {
     }, []);
 
     async function handleResendConfirmation() {
-        if (!confirmation || isResending) return;
+        if (confirmation?.status !== "CreatedConfirmationFailed" || isResending) return;
 
         setIsResending(true);
         setResendError(undefined);
@@ -58,6 +58,13 @@ export default function SuccessCreateAccountPage() {
 
         try {
             await resendConfirmation(confirmation.email);
+            const updated: ConfirmationContext = { ...confirmation, status: "Created" };
+            setConfirmation(updated);
+            try {
+                sessionStorage.setItem("accountConfirmation", JSON.stringify(updated));
+            } catch {
+                // Keep the successful result on screen even if storage is unavailable.
+            }
             setResendMessage(
                 "Your confirmation request was processed. Check your inbox; if your email is already confirmed, you can log in."
             );

@@ -23,3 +23,11 @@ export const sharedApiErrors = [
     message: "An unexpected error occurred. Please try again.",
   },
 ];
+
+export const resendErrors = [
+  ...sharedApiErrors,
+  ...[400, 404, 500].map((status) => ({
+    name: `HTTP ${status}`, error: new ApiError("http", status),
+    message: "We couldn't complete your request. Please try again later.",
+  })),
+];

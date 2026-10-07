@@ -157,7 +157,7 @@ export default function CreateAccountForm() {
         }
         catch (error) {
             setToastMessage(
-                error instanceof ApiError ? getApiErrorMessage(error) : "An unexpected error occured. Please try again"
+                error instanceof ApiError ? getApiErrorMessage(error) : "An unexpected error occurred. Please try again."
             );
         }
         finally {
