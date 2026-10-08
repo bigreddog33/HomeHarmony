@@ -11,6 +11,8 @@ data class CreateAccountUiState(
     val isCreateAccountSuccessful: Boolean = false,
     val confirmationStatus: String? = null,
     val confirmationEmail: String? = null,
+    val existingAccountEmail: String? = null,
+    val existingAccountEmailConfirmed: Boolean? = null,
     
     @StringRes val emailError: Int? = null,
     @StringRes val emailConfirmError: Int? = null,

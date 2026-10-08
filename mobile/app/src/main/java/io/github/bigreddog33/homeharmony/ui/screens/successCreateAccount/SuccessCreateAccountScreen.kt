@@ -10,12 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import io.github.bigreddog33.homeharmony.R
-
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
+import io.github.bigreddog33.homeharmony.R
+import io.github.bigreddog33.homeharmony.ui.confirmation.ResendConfirmationContent
 import io.github.bigreddog33.homeharmony.ui.confirmation.ResendConfirmationViewModel
 
 @Composable
@@ -23,11 +20,16 @@ fun SuccessCreateAccountScreen(
     email: String,
     status: String,
     onBackToLoginClick: () -> Unit,
-    resendViewModel: ResendConfirmationViewModel = viewModel(key = "resendConfirmation:$email")
+    resendViewModel: ResendConfirmationViewModel = viewModel(
+        key = "resendConfirmation:$email",
+        factory = ResendConfirmationViewModel.Factory
+    )
 ) {
     val resendState = resendViewModel.uiState
-    val confirmationFailed = status == "CreatedConfirmationFailed" && !resendState.isSuccessful
-    
+
+    val confirmationFailed =
+        status == "CreatedConfirmationFailed" && !resendState.isSuccessful
+
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier
@@ -90,41 +92,11 @@ fun SuccessCreateAccountScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
-                    
-                    if (confirmationFailed) {
-                        OutlinedButton(
-                            onClick = { resendViewModel.resend(email) },
-                            enabled = !resendState.isLoading,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                stringResource(
-                                    if (resendState.isLoading) R.string.confirmation_resending
-                                    else R.string.confirmation_resend_button
-                                )
-                            )
-                        }
 
-                        resendState.errorMessage?.let { message ->
-                            Text(
-                                text = stringResource(message),
-                                color = MaterialTheme.colorScheme.error,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.semantics {
-                                    liveRegion = LiveRegionMode.Polite
-                                }
-                            )
-                        }
-                    }
-
-                    if (resendState.isSuccessful) {
-                        Text(
-                            text = stringResource(R.string.confirmation_resend_success),
-                            color = MaterialTheme.colorScheme.primary,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.semantics {
-                                liveRegion = LiveRegionMode.Polite
-                            }
+                    if (status == "CreatedConfirmationFailed") {
+                        ResendConfirmationContent(
+                            state = resendState,
+                            onResend = { resendViewModel.resend(email) }
                         )
                     }
 
@@ -132,7 +104,9 @@ fun SuccessCreateAccountScreen(
                         onClick = onBackToLoginClick,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(stringResource(R.string.confirmation_go_to_login))
+                        Text(
+                            text = stringResource(R.string.confirmation_go_to_login)
+                        )
                     }
                 }
             }

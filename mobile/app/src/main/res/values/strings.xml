@@ -47,4 +47,9 @@
     <string name="confirmation_resend_button">Resend confirmation link</string>
     <string name="confirmation_resending">Requesting confirmation…</string>
     <string name="confirmation_resend_success">Your confirmation request was processed. Check your inbox; if your email is already confirmed, you can log in.</string>
+
+    <string name="createAccount_existing_unconfirmed">An account with this email already exists. Confirm your email before logging in, or request another confirmation link below.</string>
+    <string name="createAccount_existing_confirmed">An account with this email already exists and is confirmed. You can log in.</string>
+    <string name="reset_password">Reset password</string>
+    <string name="reset_password_unavailable">Password reset is not available yet.</string>
 </resources>

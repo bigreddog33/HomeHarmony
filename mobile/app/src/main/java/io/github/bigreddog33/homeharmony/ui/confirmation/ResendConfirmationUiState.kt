@@ -1,4 +1,4 @@
-package io.github.bigreddog33.homeharmony.ui.account.confirmation
+package io.github.bigreddog33.homeharmony.ui.confirmation
 
 import androidx.annotation.StringRes
 

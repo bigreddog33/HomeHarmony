@@ -5,20 +5,37 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.launch
 import io.github.bigreddog33.homeharmony.R
 import io.github.bigreddog33.homeharmony.data.account.AccountApi
 import io.github.bigreddog33.homeharmony.data.account.dto.ResendConfirmationRequest
 import io.github.bigreddog33.homeharmony.data.network.ApiClient
 import io.github.bigreddog33.homeharmony.data.network.ApiResult
 import io.github.bigreddog33.homeharmony.data.network.apiCall
-import kotlinx.coroutines.launch
 
 class ResendConfirmationViewModel(
+    private val savedStateHandle: SavedStateHandle,
     private val accountApi: AccountApi = ApiClient.create(AccountApi::class.java)
 ) : ViewModel() {
 
-    var uiState by mutableStateOf(ResendConfirmationUiState())
+    var uiState by mutableStateOf(ResendConfirmationUiState(isSuccessful = savedStateHandle[RESEND_SUCCESSFUL] ?: false))
         private set
+        
+    companion object {
+        private const val RESEND_SUCCESSFUL = "resendSuccessful"
+
+        val Factory = viewModelFactory {
+            initializer {
+                ResendConfirmationViewModel(
+                    savedStateHandle = createSavedStateHandle()
+                )
+            }
+        }
+    }
 
     fun resend(email: String) {
         if (uiState.isLoading || uiState.isSuccessful) return
@@ -44,9 +61,10 @@ class ResendConfirmationViewModel(
                 }
 
                 uiState = when (result) {
-                    is ApiResult.Success -> uiState.copy(
-                        isSuccessful = true
-                    )
+                    is ApiResult.Success -> {
+                        savedStateHandle[RESEND_SUCCESSFUL] = true
+                        uiState.copy(isSuccessful = true)
+                    }
 
                     is ApiResult.HttpError -> uiState.copy(
                         errorMessage = when (result.code) {

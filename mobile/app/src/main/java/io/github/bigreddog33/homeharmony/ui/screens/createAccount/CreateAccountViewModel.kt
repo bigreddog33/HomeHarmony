@@ -12,6 +12,7 @@ import io.github.bigreddog33.homeharmony.data.account.dto.CreateAccountRequest
 import io.github.bigreddog33.homeharmony.data.network.ApiClient
 import io.github.bigreddog33.homeharmony.data.network.ApiResult
 import io.github.bigreddog33.homeharmony.data.network.apiCall
+import io.github.bigreddog33.homeharmony.data.account.parseEmailConfirmed
 
 import kotlinx.coroutines.launch
 
@@ -22,19 +23,19 @@ class CreateAccountViewModel(
         private set
 
     fun onEmailChange(email: String) {
-        uiState = uiState.copy(email = email, emailError = null, emailConfirmError = null, createAccountError = null)
+        uiState = uiState.copy(email = email, emailError = null, emailConfirmError = null, createAccountError = null, existingAccountEmail = null, existingAccountEmailConfirmed = null)
     }
 
     fun onEmailConfirmChange(emailConfirm: String) {
-        uiState = uiState.copy(emailConfirm = emailConfirm, emailConfirmError = null, createAccountError = null)
+        uiState = uiState.copy(emailConfirm = emailConfirm, emailConfirmError = null, createAccountError = null, existingAccountEmail = null, existingAccountEmailConfirmed = null)
     }
 
     fun onPasswordChange(password: String) {
-        uiState = uiState.copy(password = password, passwordError = null, passwordConfirmError = null, createAccountError = null)
+        uiState = uiState.copy(password = password, passwordError = null, passwordConfirmError = null, createAccountError = null, existingAccountEmail = null, existingAccountEmailConfirmed = null)
     }
 
     fun onPasswordConfirmChange(passwordConfirm: String) {
-        uiState = uiState.copy(passwordConfirm = passwordConfirm, passwordConfirmError = null, createAccountError = null)
+        uiState = uiState.copy(passwordConfirm = passwordConfirm, passwordConfirmError = null, createAccountError = null, existingAccountEmail = null, existingAccountEmailConfirmed = null)
     }
 
     fun onSnackbarShown() {
@@ -51,7 +52,9 @@ class CreateAccountViewModel(
             emailConfirmError = validation.emailConfirm,
             passwordConfirmError = validation.passwordConfirm,
             createAccountError = null,
-            snackbarMessage = null
+            snackbarMessage = null, 
+            existingAccountEmail = null, 
+            existingAccountEmailConfirmed = null
         )
         if (!validation.isValid) return
 
@@ -80,7 +83,19 @@ class CreateAccountViewModel(
                     uiState = when (result.code) {
                         400 -> uiState.copy(createAccountError = R.string.createAccount_invalid_request)
                         401, 403 -> uiState.copy(createAccountError = R.string.createAccount_failed)
-                        409 -> uiState.copy(createAccountError = R.string.createAccount_email_in_use)
+                        409 -> {
+                                val emailConfirmed = parseEmailConfirmed(result.body)
+
+                                uiState.copy(
+                                    createAccountError = when (emailConfirmed) {
+                                        false -> R.string.createAccount_existing_unconfirmed
+                                        true -> R.string.createAccount_existing_confirmed
+                                        null -> R.string.createAccount_email_in_use
+                                    },
+                                    existingAccountEmail = email,
+                                    existingAccountEmailConfirmed = emailConfirmed
+                                )
+                            }
                         429 -> uiState.copy(snackbarMessage = R.string.too_many_requests)
                         else -> uiState.copy(snackbarMessage = R.string.createAccount_server_error)
                     }
