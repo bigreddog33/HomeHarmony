@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider
 import io.github.bigreddog33.homeharmony.R
 import io.github.bigreddog33.homeharmony.ui.confirmation.ResendConfirmationContent
 import io.github.bigreddog33.homeharmony.ui.confirmation.ResendConfirmationViewModel
@@ -20,9 +21,10 @@ fun SuccessCreateAccountScreen(
     email: String,
     status: String,
     onBackToLoginClick: () -> Unit,
+    resendViewModelFactory: ViewModelProvider.Factory = ResendConfirmationViewModel.Factory,
     resendViewModel: ResendConfirmationViewModel = viewModel(
         key = "resendConfirmation:$email",
-        factory = ResendConfirmationViewModel.Factory
+        factory = resendViewModelFactory
     )
 ) {
     val resendState = resendViewModel.uiState

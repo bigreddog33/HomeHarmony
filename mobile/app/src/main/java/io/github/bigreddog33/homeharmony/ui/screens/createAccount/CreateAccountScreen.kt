@@ -34,6 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel as composeViewModel
@@ -48,7 +49,8 @@ import kotlinx.coroutines.flow.filter
 fun CreateAccountScreen(
     onCreateAccountSuccess: (email: String, status: String) -> Unit,
     onBackToLoginClick: () -> Unit,
-    viewModel: CreateAccountViewModel = composeViewModel()
+    viewModel: CreateAccountViewModel = composeViewModel(),
+    resendViewModelFactory: ViewModelProvider.Factory = ResendConfirmationViewModel.Factory
 ) {
     val state = viewModel.uiState
     val recoveryEmail = state.existingAccountEmail
@@ -57,7 +59,7 @@ fun CreateAccountScreen(
         if (recoveryEmail != null && state.existingAccountEmailConfirmed == false) {
             composeViewModel(
                 key = "resendConfirmation:$recoveryEmail",
-                factory = ResendConfirmationViewModel.Factory
+                factory = resendViewModelFactory
             )
         } else {
             null
