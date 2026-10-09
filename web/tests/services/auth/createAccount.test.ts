@@ -11,10 +11,10 @@ const request = loginValues({ password: " Password1! " });
 const fetchMock = stubApi();
 
 describe("create account API", () => {
-  it("posts to the creation endpoint and accepts an empty success response", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+  it.each(["Created", "CreatedConfirmationFailed"])("posts to the creation endpoint and returns %s", async (status) => {
+    fetchMock.mockResolvedValue(Response.json({ status }, { status: 201 }));
 
-    await expect(createAccount(request)).resolves.toBeUndefined();
+    await expect(createAccount(request)).resolves.toEqual({ status });
 
     expect(fetchMock).toHaveBeenCalledExactlyOnceWith(
       "http://localhost:5000/api/account/createuser",
@@ -25,6 +25,48 @@ describe("create account API", () => {
         signal: expect.any(AbortSignal),
       },
     );
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each([true, false])("preserves emailConfirmed=%s on a duplicate response", async (emailConfirmed) => {
+    fetchMock.mockResolvedValue(Response.json({ status: "AlreadyExists", emailConfirmed }, { status: 409 }));
+
+    await expect(createAccount(request)).rejects.toMatchObject({
+      failure: "already-exists", emailConfirmed,
+    });
+  });
+
+  it.each([null, {}, { emailConfirmed: null }, { emailConfirmed: "false" }, { emailConfirmed: 0 }])(
+    "treats an unusable confirmation flag as unknown: %j", async (body) => {
+      fetchMock.mockResolvedValue(Response.json(body, { status: 409 }));
+
+      await expect(createAccount(request)).rejects.toMatchObject({
+        failure: "already-exists", emailConfirmed: undefined,
+      });
+    },
+  );
+
+  it.each([null, "not JSON"])("handles a duplicate with an empty or non-JSON body: %j", async (body) => {
+    fetchMock.mockResolvedValue(new Response(body, { status: 409 }));
+
+    await expect(createAccount(request)).rejects.toMatchObject({
+      failure: "already-exists", emailConfirmed: undefined,
+    });
+  });
+
+  it.each([null, {}, "Created", { status: "Unknown" }, { status: "AlreadyExists" }, { status: 0 }])(
+    "rejects an invalid success response: %j", async (body) => {
+      fetchMock.mockResolvedValue(Response.json(body, { status: 201 }));
+
+      await expect(createAccount(request)).rejects.toThrow("Unexpected account creation response.");
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
+  it.each([null, "{"])("rejects an empty or malformed success body: %j", async (body) => {
+    fetchMock.mockResolvedValue(new Response(body, { status: 201 }));
+
+    await expect(createAccount(request)).rejects.toBeInstanceOf(Error);
     expect(vi.getTimerCount()).toBe(0);
   });
 

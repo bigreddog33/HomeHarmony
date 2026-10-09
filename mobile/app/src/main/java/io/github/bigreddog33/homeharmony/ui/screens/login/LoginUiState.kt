@@ -7,8 +7,8 @@ data class LoginUiState(
     val password: String = "",
     val isLoading: Boolean = false,
     val isLoginSuccessful: Boolean = false,
-    @StringRes val emailError: Int? = null,
-    @StringRes val passwordError: Int? = null,
-    @StringRes val loginError: Int? = null,
-    @StringRes val snackbarMessage: Int? = null
+    @param:StringRes val emailError: Int? = null,
+    @param:StringRes val passwordError: Int? = null,
+    @param:StringRes val loginError: Int? = null,
+    @param:StringRes val snackbarMessage: Int? = null
 )

@@ -1,8 +1,86 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { resendConfirmation } from "@/services/auth/resendConfirmation";
+import { ApiError } from "@/services/apiClient";
+import { getApiErrorMessage } from "@/components/feedback/ApiErrorMessage";
+
 import Image from "next/image";
 import Link from "next/link";
 
+type ConfirmationContext = {
+    email: string;
+    status: "Created" | "CreatedConfirmationFailed";
+};
 
 export default function SuccessCreateAccountPage() {
+    const [confirmation, setConfirmation] = useState<ConfirmationContext | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const [isResending, setIsResending] = useState(false);
+    const [resendError, setResendError] = useState<string>();
+    const [resendMessage, setResendMessage] = useState<string>();
+
+    useEffect(() => {
+        try {
+            const saved = sessionStorage.getItem("accountConfirmation");
+            const data: unknown = saved ? JSON.parse(saved) : null;
+
+            if (
+                typeof data === "object" &&
+                data !== null &&
+                "email" in data &&
+                typeof data.email === "string" &&
+                data.email.trim() !== "" &&
+                "status" in data &&
+                (data.status === "Created" ||
+                    data.status === "CreatedConfirmationFailed")
+            ) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect -- Read browser-only storage once after hydration.
+                setConfirmation({
+                    email: data.email,
+                    status: data.status,
+                });
+            }
+        } catch {
+            // Missing or unreadable context leaves general instructions.
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    async function handleResendConfirmation() {
+        if (confirmation?.status !== "CreatedConfirmationFailed" || isResending) return;
+
+        setIsResending(true);
+        setResendError(undefined);
+        setResendMessage(undefined);
+
+        try {
+            await resendConfirmation(confirmation.email);
+            const updated: ConfirmationContext = { ...confirmation, status: "Created" };
+            setConfirmation(updated);
+            try {
+                sessionStorage.setItem("accountConfirmation", JSON.stringify(updated));
+            } catch {
+                // Keep the successful result on screen even if storage is unavailable.
+            }
+            setResendMessage(
+                "Your confirmation request was processed. Check your inbox; if your email is already confirmed, you can log in."
+            );
+        } catch (error) {
+            setResendError(
+                error instanceof ApiError
+                    ? getApiErrorMessage(error)
+                    : "An unexpected error occurred. Please try again."
+            );
+        } finally {
+            setIsResending(false);
+        }
+    }
+
+    const confirmationFailed = confirmation?.status === "CreatedConfirmationFailed";
+
     return (
         <main className="relative isolate grid min-h-screen place-items-center overflow-hidden bg-slate-50 px-5 py-10 sm:px-8">
             <div className="pointer-events-none absolute -right-28 -top-32 -z-10 h-[34rem] w-[34rem] rotate-[22deg] opacity-25">
@@ -26,18 +104,59 @@ export default function SuccessCreateAccountPage() {
                     </span>
                 </div>
 
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Account created</p>
+                {confirmation && (
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Account created</p>
+                )}
                 <h1 id="success-title" className="text-3xl font-bold tracking-tight text-indigo-950 sm:text-4xl">Check your inbox</h1>
+
                 <p className="mt-4 text-base leading-7 text-slate-600">
-                    You’re nearly there. Follow the confirmation link in your email to activate your account before logging in for the first time.
+                    {isLoading
+                        ? "Loading your account details..."
+                        : confirmationFailed
+                            ? "Your account was created, but we couldn’t send your confirmation email. Request another link below."
+                            : "You’re nearly there. Follow the confirmation link in your email to activate your account before logging in for the first time."}
                 </p>
 
-                <div className="my-8 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5 text-left">
-                    <h2 className="text-sm font-semibold text-indigo-950">Can’t find the email?</h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                        It may take a few minutes to arrive. Check your spam or junk folder, too.
-                    </p>
-                </div>
+                {!isLoading && (
+                    <div className="my-8 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5 text-left">
+                        <h2 className="text-sm font-semibold text-indigo-950">
+                            {confirmationFailed
+                                ? "Request another confirmation link"
+                                : "Can’t find the email?"}
+                        </h2>
+
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                            {confirmationFailed
+                                ? "You don’t need to create your account again."
+                                : "It may take a few minutes to arrive. Check your spam or junk folder, too."}
+                        </p>
+
+                        {confirmationFailed && (
+                            <button
+                                type="button"
+                                onClick={handleResendConfirmation}
+                                disabled={isResending}
+                                className="mt-4 rounded-xl bg-indigo-800 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
+                            >
+                                {isResending
+                                    ? "Requesting confirmation..."
+                                    : "Resend confirmation link"}
+                            </button>
+                        )}
+
+                        {resendError && (
+                            <p role="alert" className="mt-3 text-sm text-red-700">
+                                {resendError}
+                            </p>
+                        )}
+
+                        {resendMessage && (
+                            <p role="status" className="mt-3 text-sm text-green-700">
+                                {resendMessage}
+                            </p>
+                        )}
+                    </div>
+                )}
 
                 <Link href="/login" className="flex h-13 w-full items-center justify-center rounded-xl bg-indigo-800 px-5 text-base font-bold text-white shadow-lg shadow-indigo-900/15 transition hover:bg-indigo-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-4 active:translate-y-px">
                     Go to login

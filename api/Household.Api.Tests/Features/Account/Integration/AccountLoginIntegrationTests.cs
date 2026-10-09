@@ -38,7 +38,7 @@ public sealed class AccountLoginIntegrationTests : IDisposable
     [ClassData(typeof(LoginTestCases.ValidRequests))]
     public async Task Login_WhenServiceRejectsCredentials_ReturnsUnauthorized(string email, string password)
     {
-        _factory.Service.Result = false;
+        _factory.Service.LoginResult = false;
         using var response = await _client.PostAsJsonAsync("/api/account/login", new LoginRequest(email, password));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);

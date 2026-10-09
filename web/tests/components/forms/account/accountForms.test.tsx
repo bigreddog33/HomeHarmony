@@ -4,6 +4,8 @@ import { navigation } from "../../../support/navigationStub";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentType } from "react";
+import type { LoginRequest } from "@/contracts/auth/LoginRequest";
+import type { CreateAccountResponse } from "@/contracts/auth/CreateAccountResponse";
 import { beforeEach, describe, expect, it, vi, type MockedFunction } from "vitest";
 import LoginForm from "@/components/forms/account/LoginForm";
 import CreateAccountForm from "@/components/forms/account/CreateAccountForm";
@@ -26,7 +28,8 @@ vi.mock("@/services/auth/createAccount", async (importOriginal) => ({
 type FormCase = {
   name: string;
   Component: ComponentType;
-  submit: MockedFunction<typeof login>;
+  submit: MockedFunction<(request: LoginRequest) => Promise<void | CreateAccountResponse>>;
+  successResult: void | CreateAccountResponse;
   fields: readonly { field: string; label: string; required: string }[];
   values: Record<string, string>;
   button: string;
@@ -39,6 +42,7 @@ type FormCase = {
 const forms: FormCase[] = [
   {
     name: "login", Component: LoginForm, submit: vi.mocked(login),
+    successResult: undefined,
     fields: loginFields, values: loginValues(), button: "Login",
     pending: "Logging in...", navigate: navigation.push, destination: "/home",
     accountErrors: [
@@ -48,6 +52,7 @@ const forms: FormCase[] = [
   },
   {
     name: "create account", Component: CreateAccountForm, submit: vi.mocked(createAccount),
+    successResult: { status: "Created" },
     fields: accountFields, values: accountValues(), button: "Create account",
     pending: "Creating account...", navigate: navigation.replace, destination: "/successCreateAccount",
     accountErrors: [
@@ -57,10 +62,10 @@ const forms: FormCase[] = [
   },
 ];
 
-describe.each(forms)("$name form", ({ Component, submit, fields, values, button, pending, navigate, destination, accountErrors }) => {
+describe.each(forms)("$name form", ({ Component, submit, successResult, fields, values, button, pending, navigate, destination, accountErrors }) => {
   beforeEach(() => {
     submit.mockReset();
-    submit.mockResolvedValue(undefined);
+    submit.mockResolvedValue(successResult);
   });
 
   it.each(fields)("shows an accessible error for missing $field and prevents submission", async ({ field, label, required }) => {
@@ -100,7 +105,9 @@ describe.each(forms)("$name form", ({ Component, submit, fields, values, button,
   it("sends trimmed credentials and redirects only after success", async () => {
     const user = userEvent.setup();
     let finish!: () => void;
-    submit.mockReturnValue(new Promise<void>((resolve) => { finish = resolve; }));
+    submit.mockReturnValue(new Promise<void | CreateAccountResponse>((resolve) => {
+      finish = () => resolve(successResult);
+    }));
     render(<Component />);
     const paddedValues = Object.fromEntries(
       Object.entries(values).map(([field, value]) => [field, ` ${value} `]),

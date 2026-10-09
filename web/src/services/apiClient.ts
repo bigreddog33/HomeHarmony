@@ -4,6 +4,7 @@ export class ApiError extends Error {
   constructor(
     public readonly failure: ApiFailure,
     public readonly status?: number,
+    public readonly body?: unknown,
   ) {
     super(failure);
     this.name = "ApiError";
@@ -12,7 +13,7 @@ export class ApiError extends Error {
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
-export async function postJson(path: string, body: unknown): Promise<void> {
+export async function postJson(path: string, body: unknown, readResponseBody = false,): Promise<unknown> {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   if (!apiBaseUrl) {
@@ -38,9 +39,15 @@ export async function postJson(path: string, body: unknown): Promise<void> {
     );
 
     if (!response.ok) {
-      throw new ApiError("http", response.status);
+      const body: unknown = await response.json().catch(() => undefined);
+      throw new ApiError("http", response.status, body);
     }
-  } catch (error) {
+
+    if (readResponseBody) {
+      return await response.json();
+    }
+  }
+  catch (error) {
     if (error instanceof ApiError) {
       throw error;
     }
@@ -50,7 +57,8 @@ export async function postJson(path: string, body: unknown): Promise<void> {
     }
 
     throw new ApiError("network");
-  } finally {
+  }
+  finally {
     clearTimeout(timeoutId);
   }
 }
