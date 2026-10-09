@@ -302,7 +302,10 @@ class AccountJourneyTest {
     }
 
     private fun field(label: Int) =
-        compose.onNode(hasSetTextAction() and hasText(text(label)))
+        // Disabled fields retain their text semantics but expose no SetText action.
+        compose.onNode(
+            SemanticsMatcher.keyIsDefined(SemanticsProperties.EditableText) and hasText(text(label))
+        )
 
     private fun click(label: Int) { node(label).performScrollTo().performClick() }
     private fun node(label: Int) = compose.onNodeWithText(text(label))
