@@ -63,6 +63,12 @@ android {
 }
 
 dependencies {
+    constraints {
+        implementation(libs.androidx.concurrent.futures) {
+            because("Android test dependencies require 1.2.0, and AGP aligns them with the app runtime.")
+        }
+    }
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
