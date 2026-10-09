@@ -5,5 +5,5 @@ import androidx.annotation.StringRes
 data class ResendConfirmationUiState(
     val isLoading: Boolean = false,
     val isSuccessful: Boolean = false,
-    @StringRes val errorMessage: Int? = null
+    @param:StringRes val errorMessage: Int? = null
 )

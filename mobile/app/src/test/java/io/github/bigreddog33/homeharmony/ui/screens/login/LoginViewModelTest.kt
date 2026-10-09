@@ -3,7 +3,9 @@ package io.github.bigreddog33.homeharmony.ui.screens.login
 import io.github.bigreddog33.homeharmony.R
 import io.github.bigreddog33.homeharmony.data.account.AccountApi
 import io.github.bigreddog33.homeharmony.data.account.dto.CreateAccountRequest
+import io.github.bigreddog33.homeharmony.data.account.dto.CreateAccountResponse
 import io.github.bigreddog33.homeharmony.data.account.dto.LoginRequest
+import io.github.bigreddog33.homeharmony.data.account.dto.ResendConfirmationRequest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -257,8 +259,12 @@ class LoginViewModelTest {
             return result()
         }
 
-        override suspend fun createAccount(request: CreateAccountRequest): Unit {
+        override suspend fun createAccount(request: CreateAccountRequest): CreateAccountResponse {
             error("Account creation is not used by login tests.")
+        }
+
+        override suspend fun resendConfirmation(request: ResendConfirmationRequest) {
+            error("Resending confirmation is not used by login tests.")
         }
     }
 }

@@ -14,10 +14,10 @@ data class CreateAccountUiState(
     val existingAccountEmail: String? = null,
     val existingAccountEmailConfirmed: Boolean? = null,
     
-    @StringRes val emailError: Int? = null,
-    @StringRes val emailConfirmError: Int? = null,
-    @StringRes val passwordError: Int? = null,
-    @StringRes val passwordConfirmError: Int? = null,
-    @StringRes val createAccountError: Int? = null,
-    @StringRes val snackbarMessage: Int? = null
+    @param:StringRes val emailError: Int? = null,
+    @param:StringRes val emailConfirmError: Int? = null,
+    @param:StringRes val passwordError: Int? = null,
+    @param:StringRes val passwordConfirmError: Int? = null,
+    @param:StringRes val createAccountError: Int? = null,
+    @param:StringRes val snackbarMessage: Int? = null
 )

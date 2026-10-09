@@ -5,8 +5,8 @@ import androidx.core.util.PatternsCompat
 import io.github.bigreddog33.homeharmony.R
 
 data class LoginValidationErrors(
-    @StringRes val email: Int? = null,
-    @StringRes val password: Int? = null
+    @param:StringRes val email: Int? = null,
+    @param:StringRes val password: Int? = null
 ) {
     val isValid: Boolean
         get() = email == null && password == null
