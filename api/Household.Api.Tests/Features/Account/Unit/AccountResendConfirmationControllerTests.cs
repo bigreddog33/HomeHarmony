@@ -10,11 +10,11 @@ namespace Household.Api.Tests.Features.Account.Unit;
 public sealed class AccountResendConfirmationControllerTests
 {
     [Theory]
-    [ClassData(typeof(AccountControllerCases.ServiceResults))]
-    public async Task ResendConfirmation_ForwardsRequestAndToken_AndReturnsServiceStatus(bool serviceResult, int expectedStatus)
+    [ClassData(typeof(AccountControllerCases.ResendConfirmationResults))]
+    public async Task ResendConfirmation_ForwardsRequestAndToken_AndReturnsServiceStatus(SendConfirmationStatus serviceResult, int expectedStatus)
     {
         // Arrange: choose what the service returns, independently of any account rules.
-        var service = new AccountServiceStub { Result = serviceResult };
+        var service = new AccountServiceStub { ConfirmationResult = serviceResult };
         var controller = new AccountController(service);
         var request = new ResendConfirmationRequest("user@example.com");
         using var source = new CancellationTokenSource();

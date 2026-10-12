@@ -47,3 +47,60 @@ jobs:
       # 5. Compile the app, run unit tests and create the APK.
       - name: Build Android app
         run: ./gradlew build
+
+      - name: Upload unit test and lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-unit-test-reports
+          path: |
+            mobile/app/build/reports/
+            mobile/app/build/test-results/
+          if-no-files-found: ignore
+
+  android-ui-tests:
+    name: Android account UI tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x mobile/gradlew
+
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run account journeys on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          working-directory: mobile
+          script: ./gradlew connectedDebugAndroidTest --stacktrace
+
+      - name: Upload UI test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-ui-test-reports
+          path: |
+            mobile/app/build/reports/androidTests/
+            mobile/app/build/outputs/androidTest-results/
+          if-no-files-found: ignore

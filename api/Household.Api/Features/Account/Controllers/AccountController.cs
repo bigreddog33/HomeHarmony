@@ -25,31 +25,58 @@ public sealed class AccountController(IAccountService accountService) : Controll
 
     [AllowAnonymous]
     [HttpPost("createuser")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateUser(
         CreateUserRequest request,
         CancellationToken cancellationToken)
     {
-        var isSuccess = await accountService.CreateUserAsync(request, cancellationToken);
+        var result = await accountService.CreateUserAsync(request, cancellationToken);
 
-        return isSuccess ? Ok() : Unauthorized();
+        if (result.Status == CreateUserStatus.Created) return StatusCode(
+                StatusCodes.Status201Created,
+                new CreateUserResponse(
+                    result.Status));
+
+        if (result.Status == CreateUserStatus.CreatedConfirmationFailed) return StatusCode(
+                StatusCodes.Status201Created,
+                new CreateUserResponse(
+                    result.Status));
+
+        if (result.Status == CreateUserStatus.AlreadyExists) return Conflict(
+                new CreateUserResponse(
+                    result.Status,
+                    EmailConfirmed: result.EmailConfirmed));
+
+        if (result.Status == CreateUserStatus.ValidationFailed) return BadRequest(
+                new CreateUserResponse(
+                    result.Status,
+                    result.IdentityResult!.Errors));
+
+        return StatusCode(StatusCodes.Status500InternalServerError);
     }
 
     [AllowAnonymous]
     [HttpPost("resendconfirmation")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ResendConfirmation(
         ResendConfirmationRequest request,
         CancellationToken cancellationToken)
     {
         //Here will be the same function used for both sending and resending an email confirmation
         //since they both do the same thing, but from different locations
-        var isSuccess = await accountService.SendConfirmationAsync(request, cancellationToken);
+        var result = await accountService.SendConfirmationAsync(request, cancellationToken);
 
-        return isSuccess ? Ok() : Unauthorized();
+        if (result == SendConfirmationStatus.Sent || result == SendConfirmationStatus.AlreadyConfirmed)
+            return StatusCode(StatusCodes.Status200OK);
+
+        if (result == SendConfirmationStatus.UserNotFound)
+            return StatusCode(StatusCodes.Status404NotFound);
+        
+        return StatusCode(StatusCodes.Status500InternalServerError);
     }
 }

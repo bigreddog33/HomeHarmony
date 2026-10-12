@@ -23,7 +23,7 @@ class ApiCallTest {
             throw HttpException(Response.error<Unit>(409, "Conflict".toResponseBody()))
         }
 
-        assertEquals(ApiResult.HttpError(409), result)
+        assertEquals(ApiResult.HttpError(409, "Conflict"), result)
     }
 
     @Test

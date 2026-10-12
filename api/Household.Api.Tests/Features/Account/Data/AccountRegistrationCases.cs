@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace Household.Api.Tests.Features.Account.Data;
 
 public static class AccountRegistrationCases
@@ -7,6 +9,27 @@ public static class AccountRegistrationCases
 
     public enum ServiceFailure { Timeout, UnexpectedError }
     public enum RequestCancellation { ClientCancellation, ClientTimeout }
+
+    public sealed class CreateUserResults : TheoryData<CreateUserStatus, HttpStatusCode>
+    {
+        public CreateUserResults()
+        {
+            Add(CreateUserStatus.Created, HttpStatusCode.Created);
+            Add(CreateUserStatus.CreatedConfirmationFailed, HttpStatusCode.Created);
+            Add(CreateUserStatus.AlreadyExists, HttpStatusCode.Conflict);
+        }
+    }
+
+    public sealed class ResendConfirmationResults : TheoryData<SendConfirmationStatus, HttpStatusCode>
+    {
+        public ResendConfirmationResults()
+        {
+            Add(SendConfirmationStatus.Sent, HttpStatusCode.OK);
+            Add(SendConfirmationStatus.UserNotFound, HttpStatusCode.NotFound);
+            Add(SendConfirmationStatus.AlreadyConfirmed, HttpStatusCode.OK);
+            Add(SendConfirmationStatus.Failed, HttpStatusCode.InternalServerError);
+        }
+    }
 
     public sealed class Endpoints : TheoryData<string>
     {

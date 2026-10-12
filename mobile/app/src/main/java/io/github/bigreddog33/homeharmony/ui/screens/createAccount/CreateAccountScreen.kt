@@ -34,20 +34,39 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.compose.viewModel as composeViewModel
 import io.github.bigreddog33.homeharmony.R
+import io.github.bigreddog33.homeharmony.ui.confirmation.ResendConfirmationContent
+import io.github.bigreddog33.homeharmony.ui.confirmation.ResendConfirmationUiState
+import io.github.bigreddog33.homeharmony.ui.confirmation.ResendConfirmationViewModel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 
 @Composable
 fun CreateAccountScreen(
-    onCreateAccountSuccess: () -> Unit,
+    onCreateAccountSuccess: (email: String, status: String) -> Unit,
     onBackToLoginClick: () -> Unit,
-    viewModel: CreateAccountViewModel = viewModel()
+    viewModel: CreateAccountViewModel = composeViewModel(),
+    resendViewModelFactory: ViewModelProvider.Factory = ResendConfirmationViewModel.Factory
 ) {
     val state = viewModel.uiState
+    val recoveryEmail = state.existingAccountEmail
+    
+    val resendViewModel: ResendConfirmationViewModel? =
+        if (recoveryEmail != null && state.existingAccountEmailConfirmed == false) {
+            composeViewModel(
+                key = "resendConfirmation:$recoveryEmail",
+                factory = resendViewModelFactory
+            )
+        } else {
+            null
+        }
+
+    val resendState = resendViewModel?.uiState ?: ResendConfirmationUiState()
+    
     val focusManager = LocalFocusManager.current
     val snackbarHostState = remember { SnackbarHostState() }
     val snackbarMessage = state.snackbarMessage?.let { stringResource(it) }
@@ -56,9 +75,12 @@ fun CreateAccountScreen(
 
     LaunchedEffect(viewModel, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            snapshotFlow { viewModel.uiState.isCreateAccountSuccessful }
-                .filter { it }
-                .collect { currentOnCreateAccountSuccess() }
+            snapshotFlow { viewModel.uiState }
+                .filter { it.isCreateAccountSuccessful }
+                .collect { successState -> 
+                    val email = successState.confirmationEmail?: return@collect
+                    val status = successState.confirmationStatus?: return@collect
+                    currentOnCreateAccountSuccess(email,status) }
         }
     }
 
@@ -99,13 +121,28 @@ fun CreateAccountScreen(
                     CreateAccountHeader()
                     CreateAccountForm(
                         state = state,
+                        resendState = resendState,
                         onEmailChange = viewModel::onEmailChange,
                         onEmailConfirmChange = viewModel::onEmailConfirmChange,
                         onPasswordChange = viewModel::onPasswordChange,
                         onPasswordConfirmChange = viewModel::onPasswordConfirmChange,
                         onCreateAccountClick = {
-                            focusManager.clearFocus()
-                            viewModel.createAccount()
+                            if (resendViewModel?.uiState?.isLoading != true) {
+                                focusManager.clearFocus()
+                                viewModel.createAccount()
+                            }
+                        },
+                        onResendClick = {
+                            if (
+                                !viewModel.uiState.isLoading &&
+                                viewModel.uiState.existingAccountEmail == recoveryEmail &&
+                                viewModel.uiState.existingAccountEmailConfirmed == false
+                            ) {
+                                recoveryEmail?.let { email ->
+                                    focusManager.clearFocus()
+                                    resendViewModel?.resend(email)
+                                }
+                            }
                         },
                         onBackToLoginClick = onBackToLoginClick
                     )
@@ -172,14 +209,17 @@ private fun CreateAccountHeader() {
 @Composable
 private fun CreateAccountForm(
     state: CreateAccountUiState,
+    resendState: ResendConfirmationUiState,
     onEmailChange: (String) -> Unit,
     onEmailConfirmChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onPasswordConfirmChange: (String) -> Unit,
     onCreateAccountClick: () -> Unit,
+    onResendClick: () -> Unit,
     onBackToLoginClick: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
+    val isBusy = state.isLoading || resendState.isLoading
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(
@@ -187,7 +227,7 @@ private fun CreateAccountForm(
             onValueChange = onEmailChange,
             label = { Text(stringResource(R.string.email_label)) },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading,
+            enabled = !isBusy,
             isError = state.emailError != null,
             supportingText = state.emailError?.let { error ->
                 { Text(stringResource(error)) }
@@ -209,7 +249,7 @@ private fun CreateAccountForm(
             onValueChange = onEmailConfirmChange,
             label = { Text(stringResource(R.string.email_confirm_label)) },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading,
+            enabled = !isBusy,
             isError = state.emailConfirmError != null,
             supportingText = state.emailConfirmError?.let { error ->
                 { Text(stringResource(error)) }
@@ -233,7 +273,7 @@ private fun CreateAccountForm(
             onValueChange = onPasswordChange,
             label = { Text(stringResource(R.string.password_label)) },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading,
+            enabled = !isBusy,
             isError = state.passwordError != null,
             supportingText = {
                 Text(stringResource(state.passwordError ?: R.string.createAccount_password_rules))
@@ -256,7 +296,7 @@ private fun CreateAccountForm(
             onValueChange = onPasswordConfirmChange,
             label = { Text(stringResource(R.string.password_confirm_label)) },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !state.isLoading,
+            enabled = !isBusy,
             isError = state.passwordConfirmError != null,
             supportingText = state.passwordConfirmError?.let { error ->
                 { Text(stringResource(error)) }
@@ -271,7 +311,7 @@ private fun CreateAccountForm(
             keyboardActions = KeyboardActions(onDone = { onCreateAccountClick() }),
             shape = MaterialTheme.shapes.medium
         )
-
+        
         state.createAccountError?.let { error ->
             Text(
                 text = stringResource(error),
@@ -280,12 +320,42 @@ private fun CreateAccountForm(
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
             )
         }
+        
+        if (
+            state.existingAccountEmail != null &&
+            state.existingAccountEmailConfirmed == false
+        ) {
+            ResendConfirmationContent(
+                state = resendState,
+                onResend = onResendClick,
+                enabled = !isBusy
+            )
+        }
+        
+        if (
+            state.existingAccountEmail != null &&
+            state.existingAccountEmailConfirmed == true
+        ) {
+            OutlinedButton(
+                onClick = {},
+                enabled = false,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.reset_password))
+            }
+
+            Text(
+                text = stringResource(R.string.reset_password_unavailable),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
         Spacer(modifier = Modifier.height(6.dp))
 
         Button(
             onClick = onCreateAccountClick,
-            enabled = !state.isLoading,
+            enabled = !isBusy,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = MaterialTheme.shapes.medium
         ) {
@@ -307,7 +377,7 @@ private fun CreateAccountForm(
 
         OutlinedButton(
             onClick = onBackToLoginClick,
-            enabled = !state.isLoading,
+            enabled = !isBusy,
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = MaterialTheme.shapes.medium
         ) {

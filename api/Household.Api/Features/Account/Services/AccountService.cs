@@ -7,11 +7,13 @@ public class AccountService : IAccountService
 {
     private readonly UserManager<ApplicationIdentityUser> _userManager;
     private readonly SignInManager<ApplicationIdentityUser> _signInManager;
+    private readonly ILogger<AccountService> _logger;
 
-    public AccountService(UserManager<ApplicationIdentityUser> userManager, SignInManager<ApplicationIdentityUser> signInManager)
+    public AccountService(UserManager<ApplicationIdentityUser> userManager, SignInManager<ApplicationIdentityUser> signInManager, ILogger<AccountService> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _logger = logger;
     }
 
     public async Task<bool> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
@@ -19,7 +21,7 @@ public class AccountService : IAccountService
         cancellationToken.ThrowIfCancellationRequested();
 
         var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null)return false;
+        if (user is null) return false;
 
         var result = await _signInManager.CheckPasswordSignInAsync(
             user,
@@ -30,40 +32,59 @@ public class AccountService : IAccountService
         return result.Succeeded;
     }
 
-    public async Task<bool> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken)
+    public async Task<CreateUserResult> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var existingUser= await _userManager.FindByEmailAsync(request.Email);
-        if (existingUser is not null) return false;
+        var existingUser = await _userManager.FindByEmailAsync(request.Email);
+        if (existingUser is not null) return new(CreateUserStatus.AlreadyExists, EmailConfirmed: existingUser.EmailConfirmed);
 
-        var user=new ApplicationIdentityUser
+        var user = new ApplicationIdentityUser { UserName = request.Email, Email = request.Email };
+        var identityResult = await _userManager.CreateAsync(user, request.Password);
+        if (!identityResult.Succeeded)
         {
-            UserName=request.Email,
-            Email=request.Email
-        };
+            var isDuplicate = identityResult.Errors.Any(
+                    error => error.Code is nameof(IdentityErrorDescriber.DuplicateEmail) or nameof(IdentityErrorDescriber.DuplicateUserName)
+                );
 
-        var result = await _userManager.CreateAsync(
-            user,
-            request.Password
-        );
+            if (!isDuplicate) return new(CreateUserStatus.ValidationFailed, IdentityResult: identityResult);
 
-        return result.Succeeded;
+            var duplicateUser = await _userManager.FindByEmailAsync(request.Email);
+            return new(CreateUserStatus.AlreadyExists, IdentityResult: identityResult, EmailConfirmed: duplicateUser?.EmailConfirmed);
+        }
+
+        try
+        {
+            var confirmationResult = await SendConfirmationAsync(new ResendConfirmationRequest(request.Email), cancellationToken);
+            if (confirmationResult != SendConfirmationStatus.Sent) return new(CreateUserStatus.CreatedConfirmationFailed, ConfirmationStatus: confirmationResult);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Confirmation failed after creating user {UserId}.", user.Id);
+            return new(CreateUserStatus.CreatedConfirmationFailed, ConfirmationStatus: SendConfirmationStatus.Failed);
+        }
+
+        return new(CreateUserStatus.Created);
     }
 
-    public async Task<bool> SendConfirmationAsync(ResendConfirmationRequest request, CancellationToken cancellationToken)
+    public async Task<SendConfirmationStatus> SendConfirmationAsync(ResendConfirmationRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var user= await _userManager.FindByEmailAsync(request.Email);
-        if (user is null) return false;
-        if (user.EmailConfirmed) return false;
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user is null) return SendConfirmationStatus.UserNotFound;
+        if (user.EmailConfirmed) return SendConfirmationStatus.AlreadyConfirmed;
 
-        var token=await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        if (token.IsNullOrEmpty()) return SendConfirmationStatus.Failed;
 
         //TODO: build confirmation URL
         //TODO: send using configured email provider
 
-        return !token.IsNullOrEmpty();
+        return SendConfirmationStatus.Sent;
     }
 }

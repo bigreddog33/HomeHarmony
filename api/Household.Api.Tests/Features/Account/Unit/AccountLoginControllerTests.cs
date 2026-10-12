@@ -14,7 +14,7 @@ public sealed class AccountLoginControllerTests
     public async Task Login_ForwardsRequestAndToken_AndReturnsServiceStatus(bool serviceResult, int expectedStatus)
     {
         // Arrange: choose what the service returns, independently of any account rules.
-        var service = new AccountServiceStub { Result = serviceResult };
+        var service = new AccountServiceStub { LoginResult = serviceResult };
         var controller = new AccountController(service);
         var request = new LoginRequest("user@example.com", "Password123!");
         using var source = new CancellationTokenSource();

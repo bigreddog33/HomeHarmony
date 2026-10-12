@@ -10,7 +10,16 @@ internal suspend fun <T> apiCall(request: suspend () -> T): ApiResult<T> = try {
 } catch (exception: CancellationException) {
     throw exception
 } catch (exception: HttpException) {
-    ApiResult.HttpError(exception.code())
+    val body = try {
+        exception.response()?.errorBody()?.string()
+    } catch (_: IOException) {
+        null
+    }
+
+    ApiResult.HttpError(
+        code = exception.code(),
+        body = body
+    )
 } catch (_: IOException) {
     ApiResult.NetworkError
 } catch (_: Exception) {

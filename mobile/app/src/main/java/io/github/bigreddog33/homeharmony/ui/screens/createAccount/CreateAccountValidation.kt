@@ -5,10 +5,10 @@ import androidx.core.util.PatternsCompat
 import io.github.bigreddog33.homeharmony.R
 
 data class CreateAccountValidationErrors(
-    @StringRes val email: Int? = null,
-    @StringRes val password: Int? = null,
-    @StringRes val emailConfirm: Int? = null,
-    @StringRes val passwordConfirm: Int? = null
+    @param:StringRes val email: Int? = null,
+    @param:StringRes val password: Int? = null,
+    @param:StringRes val emailConfirm: Int? = null,
+    @param:StringRes val passwordConfirm: Int? = null
 ) {
     val isValid: Boolean
         get() = email == null && password == null && emailConfirm == null && passwordConfirm == null
