@@ -19,6 +19,8 @@ internal sealed class IdentityUserManagerStub : UserManager<ApplicationIdentityU
     public Queue<ApplicationIdentityUser?> FindResults { get; } = new();
     public IdentityResult CreateResult { get; set; } = IdentityResult.Success;
     public string ConfirmationToken { get; set; } = "test-confirmation-token";
+    public Func<string, Task<ApplicationIdentityUser?>>? OnFindByEmail { get; set; }
+    public Func<ApplicationIdentityUser, Task<string>>? OnGenerateConfirmation { get; set; }
 
     public List<string> EmailLookups { get; } = [];
     public List<(ApplicationIdentityUser User, string Password)> CreateCalls { get; } = [];
@@ -27,7 +29,7 @@ internal sealed class IdentityUserManagerStub : UserManager<ApplicationIdentityU
     public override Task<ApplicationIdentityUser?> FindByEmailAsync(string email)
     {
         EmailLookups.Add(email);
-        return Task.FromResult(FindResults.Dequeue());
+        return OnFindByEmail?.Invoke(email) ?? Task.FromResult(FindResults.Dequeue());
     }
 
     public override Task<IdentityResult> CreateAsync(ApplicationIdentityUser user, string password)
@@ -39,7 +41,7 @@ internal sealed class IdentityUserManagerStub : UserManager<ApplicationIdentityU
     public override Task<string> GenerateEmailConfirmationTokenAsync(ApplicationIdentityUser user)
     {
         ConfirmationCalls.Add(user);
-        return Task.FromResult(ConfirmationToken);
+        return OnGenerateConfirmation?.Invoke(user) ?? Task.FromResult(ConfirmationToken);
     }
 
     // UserManager requires a store, but the overrides above never use one.

@@ -7,11 +7,13 @@ public class AccountService : IAccountService
 {
     private readonly UserManager<ApplicationIdentityUser> _userManager;
     private readonly SignInManager<ApplicationIdentityUser> _signInManager;
+    private readonly ILogger<AccountService> _logger;
 
-    public AccountService(UserManager<ApplicationIdentityUser> userManager, SignInManager<ApplicationIdentityUser> signInManager)
+    public AccountService(UserManager<ApplicationIdentityUser> userManager, SignInManager<ApplicationIdentityUser> signInManager, ILogger<AccountService> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _logger = logger;
     }
 
     public async Task<bool> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
@@ -51,8 +53,20 @@ public class AccountService : IAccountService
             return new(CreateUserStatus.AlreadyExists, IdentityResult: identityResult, EmailConfirmed: duplicateUser?.EmailConfirmed);
         }
 
-        var confirmationResult = await SendConfirmationAsync(new ResendConfirmationRequest(request.Email), cancellationToken);
-        if (confirmationResult != SendConfirmationStatus.Sent) return new(CreateUserStatus.CreatedConfirmationFailed, ConfirmationStatus: confirmationResult);
+        try
+        {
+            var confirmationResult = await SendConfirmationAsync(new ResendConfirmationRequest(request.Email), cancellationToken);
+            if (confirmationResult != SendConfirmationStatus.Sent) return new(CreateUserStatus.CreatedConfirmationFailed, ConfirmationStatus: confirmationResult);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Confirmation failed after creating user {UserId}.", user.Id);
+            return new(CreateUserStatus.CreatedConfirmationFailed, ConfirmationStatus: SendConfirmationStatus.Failed);
+        }
 
         return new(CreateUserStatus.Created);
     }

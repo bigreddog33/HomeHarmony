@@ -60,16 +60,50 @@ describe("registration page handoff", () => {
     expect(resend).not.toHaveBeenCalled();
   });
 
-  it.each(["removeItem", "setItem"] as const)("still navigates after creation when storage.%s throws", async (method) => {
+  it.each(["removeItem", "setItem", "getItem"] as const)("shows creation success here when storage.%s throws", async (method) => {
     vi.spyOn(Storage.prototype, method).mockImplementation(() => {
       throw new DOMException("Storage unavailable", "SecurityError");
     });
 
     await fillAndSubmit();
 
-    expect(navigation.replace).toHaveBeenCalledExactlyOnceWith("/successCreateAccount");
+    expect(navigation.replace).not.toHaveBeenCalled();
+    expect(screen.getByText("Account created")).toBeVisible();
+    expect(screen.getByText(/Follow the confirmation link in your email/)).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Create account" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Resend confirmation link" })).not.toBeInTheDocument();
     expect(submit).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it.each(["removeItem", "setItem", "getItem"] as const)("keeps resend available here when storage.%s throws", async (method) => {
+    sessionStorage.setItem(storageKey, JSON.stringify({ email: "old@example.com", status: "Created" }));
+    vi.spyOn(Storage.prototype, method).mockImplementation(() => {
+      throw new DOMException("Storage unavailable", "SecurityError");
+    });
+    submit.mockResolvedValue({ status: "CreatedConfirmationFailed" });
+    const pending = deferred<void>();
+    resend.mockReturnValueOnce(pending.promise).mockResolvedValueOnce(undefined);
+    const user = await fillAndSubmit();
+
+    expect(navigation.replace).not.toHaveBeenCalled();
+    expect(screen.getByText(/Your account was created, but we couldn’t send/)).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Create account" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Email", { exact: true })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Resend confirmation link" }));
+    const button = screen.getByRole("button", { name: "Requesting confirmation..." });
+    expect(button).toBeDisabled();
+    await user.click(button);
+    expect(resend).toHaveBeenCalledExactlyOnceWith("name@example.com");
+
+    await act(async () => pending.reject(resendErrors[0].error));
+    expect(await screen.findByRole("alert")).toHaveTextContent(resendErrors[0].message);
+    await user.click(screen.getByRole("button", { name: "Resend confirmation link" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByText(/Follow the confirmation link in your email/)).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Resend confirmation link" })).not.toBeInTheDocument();
+    expect(resend).toHaveBeenNthCalledWith(2, "name@example.com");
+    expect(submit).toHaveBeenCalledTimes(1);
   });
 
   it("does not navigate or store a context when the API response is unusable", async () => {

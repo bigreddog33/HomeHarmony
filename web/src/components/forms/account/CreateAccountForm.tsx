@@ -5,6 +5,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import type { CreateAccountRequest } from "@/contracts/auth/CreateAccountRequest";
+import type { CreateAccountResponse } from "@/contracts/auth/CreateAccountResponse";
 import { ApiError } from "@/services/apiClient";
 import { getApiErrorMessage } from "@/components/feedback/ApiErrorMessage";
 import { createAccount, CreateAccountApiError } from "@/services/auth/createAccount";
@@ -34,6 +35,7 @@ export default function CreateAccountForm() {
     const [accountError, setAccountError] = useState<string>();
     const [toastMessage, setToastMessage] = useState<string>();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [createdStatus, setCreatedStatus] = useState<CreateAccountResponse["status"]>();
 
     const [isResending, setIsResending] = useState(false);
     const [recoveryAction, setRecoveryAction] = useState<"resend-confirmation" | "reset-password" | undefined>();
@@ -72,7 +74,7 @@ export default function CreateAccountForm() {
 
     async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
-        if (isBusy) return;
+        if (isBusy || createdStatus) return;
 
         const errors = validateCreateAccount(values);
         setFieldErrors(errors);
@@ -102,15 +104,17 @@ export default function CreateAccountForm() {
 
             try {
                 sessionStorage.removeItem("accountConfirmation");
-                sessionStorage.setItem(
-                    "accountConfirmation",
-                    JSON.stringify({
-                        email: request.email,
-                        status: result.status,
-                    }),
-                );
+                const confirmation = JSON.stringify({ email: request.email, status: result.status });
+                sessionStorage.setItem("accountConfirmation", confirmation);
+                if (sessionStorage.getItem("accountConfirmation") !== confirmation) {
+                    throw new Error("Confirmation details could not be saved.");
+                }
             } catch {
-                // The account exists even if browser storage is unavailable.
+                // Keep confirmation recovery here when the next page cannot read the details.
+                setCreatedStatus(result.status);
+                setValues({ ...initialValues, email: request.email });
+                setIsSubmitting(false);
+                return;
             }
 
             router.replace("/successCreateAccount");
@@ -145,7 +149,7 @@ export default function CreateAccountForm() {
     }
 
     async function handleResendConfirmation() {
-        if (isBusy || recoveryAction !== "resend-confirmation") return;
+        if (isBusy || (recoveryAction !== "resend-confirmation" && createdStatus !== "CreatedConfirmationFailed")) return;
 
         setIsResending(true);
         setToastMessage(undefined);
@@ -153,6 +157,7 @@ export default function CreateAccountForm() {
 
         try {
             await resendConfirmation(values.email.trim());
+            if (createdStatus) setCreatedStatus("Created");
             setRecoveryMessage("Your confirmation request was processed");
         }
         catch (error) {
@@ -173,7 +178,26 @@ export default function CreateAccountForm() {
                     document.body,
                 )}
 
-            <form
+            {createdStatus ? (
+                <div className="space-y-4" role="status">
+                    <p className="font-semibold text-indigo-950">Account created</p>
+                    <p className="text-slate-600">
+                        {createdStatus === "CreatedConfirmationFailed"
+                            ? "Your account was created, but we couldn’t send your confirmation email. You don’t need to create your account again."
+                            : "Follow the confirmation link in your email to activate your account before logging in."}
+                    </p>
+                    {createdStatus === "CreatedConfirmationFailed" && (
+                        <button
+                            type="button"
+                            onClick={handleResendConfirmation}
+                            disabled={isResending}
+                            className="rounded-xl bg-indigo-800 px-4 py-3 font-semibold text-white disabled:opacity-60"
+                        >
+                            {isResending ? "Requesting confirmation..." : "Resend confirmation link"}
+                        </button>
+                    )}
+                </div>
+            ) : <form
                 onSubmit={handleSubmit}
                 noValidate
                 aria-busy={isBusy}
@@ -295,7 +319,7 @@ export default function CreateAccountForm() {
                     {isSubmitting ? "Creating account..." : "Create account"}
                 </button>
 
-            </form>
+            </form>}
         </>
     );
 }

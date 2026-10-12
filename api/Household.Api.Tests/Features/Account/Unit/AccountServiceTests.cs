@@ -135,6 +135,76 @@ public sealed class AccountServiceTests : IDisposable
             Assert.Empty(_userManager.ConfirmationCalls);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CreateUser_WhenConfirmationThrows_PreservesCreatedAccount(bool lookupFails)
+    {
+        var createdUser = new ApplicationIdentityUser { Email = _request.Email };
+        _userManager.OnFindByEmail = _ => _userManager.EmailLookups.Count == 1
+            ? Task.FromResult<ApplicationIdentityUser?>(null)
+            : lookupFails
+                ? Task.FromException<ApplicationIdentityUser?>(new TimeoutException("Confirmation lookup failed."))
+                : Task.FromResult<ApplicationIdentityUser?>(createdUser);
+        _userManager.OnGenerateConfirmation = _ => Task.FromException<string>(
+            new System.Security.Cryptography.CryptographicException("Token generation failed."));
+
+        var result = await _service.CreateUserAsync(_request, CancellationToken.None);
+
+        Assert.Equal(CreateUserStatus.CreatedConfirmationFailed, result.Status);
+        Assert.Equal(SendConfirmationStatus.Failed, result.ConfirmationStatus);
+        Assert.Null(result.IdentityResult);
+        Assert.Single(_userManager.CreateCalls);
+        Assert.Equal(lookupFails ? 0 : 1, _userManager.ConfirmationCalls.Count);
+    }
+
+    [Fact]
+    public async Task CreateUser_WhenConfirmationTimesOut_PreservesCreatedAccount()
+    {
+        _userManager.FindResults.Enqueue(null);
+        _userManager.FindResults.Enqueue(new ApplicationIdentityUser { Email = _request.Email });
+        // A provider timeout can cancel its own operation without cancelling the HTTP request.
+        _userManager.OnGenerateConfirmation = _ => Task.FromCanceled<string>(new CancellationToken(true));
+
+        var result = await _service.CreateUserAsync(_request, CancellationToken.None);
+
+        Assert.Equal(CreateUserStatus.CreatedConfirmationFailed, result.Status);
+        Assert.Equal(SendConfirmationStatus.Failed, result.ConfirmationStatus);
+        Assert.Single(_userManager.CreateCalls);
+    }
+
+    [Fact]
+    public async Task CreateUser_WhenRequestIsCancelledDuringConfirmation_PropagatesCancellation()
+    {
+        using var source = new CancellationTokenSource();
+        _userManager.FindResults.Enqueue(null);
+        _userManager.FindResults.Enqueue(new ApplicationIdentityUser { Email = _request.Email });
+        _userManager.OnGenerateConfirmation = _ =>
+        {
+            source.Cancel();
+            return Task.FromCanceled<string>(source.Token);
+        };
+
+        var exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => _service.CreateUserAsync(_request, source.Token));
+
+        Assert.Equal(source.Token, exception.CancellationToken);
+        Assert.Single(_userManager.CreateCalls);
+        Assert.Single(_userManager.ConfirmationCalls);
+    }
+
+    [Fact]
+    public async Task CreateUser_WhenInitialLookupThrows_DoesNotReportCreation()
+    {
+        _userManager.OnFindByEmail = _ => Task.FromException<ApplicationIdentityUser?>(new TimeoutException());
+
+        await Assert.ThrowsAsync<TimeoutException>(
+            () => _service.CreateUserAsync(_request, CancellationToken.None));
+
+        Assert.Empty(_userManager.CreateCalls);
+        Assert.Empty(_userManager.ConfirmationCalls);
+    }
+
     [Fact]
     public async Task CreateUser_WithCancelledToken_DoesNotCallIdentity()
     {
