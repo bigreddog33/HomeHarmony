@@ -16,20 +16,69 @@ public class AccountService : IAccountService
         _logger = logger;
     }
 
-    public async Task<bool> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
+    public async Task<LoginResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null) return false;
+        var authenticationScheme = request.Mode switch
+        {
+            LoginMode.Token => IdentityConstants.BearerScheme,
+            LoginMode.SessionCookie or LoginMode.PersistentCookie => IdentityConstants.ApplicationScheme,
+            _ => throw new ArgumentException("A valid login mode is required.", nameof(request))
+        };
 
-        var result = await _signInManager.CheckPasswordSignInAsync(
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user is null) return new(LoginStatus.InvalidCredentials);
+
+        var restriction = await CheckLoginRestrictionsAsync(user, request.Password);
+        if (restriction is not null) return restriction;
+
+        cancellationToken.ThrowIfCancellationRequested();
+        _signInManager.AuthenticationScheme = authenticationScheme;
+
+        var result = await _signInManager.PasswordSignInAsync(
             user,
             request.Password,
+            isPersistent: request.Mode == LoginMode.PersistentCookie,
             lockoutOnFailure: true
         );
 
-        return result.Succeeded;
+        if (result.Succeeded) return new(LoginStatus.Succeeded);
+        if (result.IsLockedOut) return new(LoginStatus.LockedOut, await _userManager.GetLockoutEndDateAsync(user));
+        if (result.RequiresTwoFactor) return new(LoginStatus.RequiresTwoFactor);
+        if (result.IsNotAllowed) return new(LoginStatus.NotAllowed);
+
+        return new(LoginStatus.InvalidCredentials);
+    }
+
+    private async Task<LoginResult?> CheckLoginRestrictionsAsync(ApplicationIdentityUser user, string password)
+    {
+        if (_userManager.SupportsUserLockout && await _userManager.IsLockedOutAsync(user))
+            return new(LoginStatus.LockedOut, await _userManager.GetLockoutEndDateAsync(user));
+
+        if (await _signInManager.CanSignInAsync(user))
+            return null;
+
+        if (!await _userManager.CheckPasswordAsync(user, password))
+        {
+            if (_userManager.SupportsUserLockout && await _userManager.GetLockoutEnabledAsync(user))
+            {
+                var failureResult = await _userManager.AccessFailedAsync(user);
+
+                if (!failureResult.Succeeded)
+                    return new(LoginStatus.InvalidCredentials);
+
+                if (await _userManager.IsLockedOutAsync(user))
+                    return new(LoginStatus.LockedOut, await _userManager.GetLockoutEndDateAsync(user));
+            }
+
+            return new(LoginStatus.InvalidCredentials);
+        }
+
+        if (_signInManager.Options.SignIn.RequireConfirmedEmail && !await _userManager.IsEmailConfirmedAsync(user))
+            return new(LoginStatus.EmailNotConfirmed);
+
+        return new(LoginStatus.NotAllowed);
     }
 
     public async Task<CreateUserResult> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken)

@@ -14,13 +14,35 @@ public sealed class AccountController(IAccountService accountService) : Controll
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status423Locked)]
     public async Task<IActionResult> Login(
         LoginRequest request,
         CancellationToken cancellationToken)
     {
-        var isValid = await accountService.LoginAsync(request, cancellationToken);
+        var result = await accountService.LoginAsync(request,cancellationToken);
 
-        return isValid ? Ok() : Unauthorized();
+        if (result.Status == LoginStatus.Succeeded && request.Mode == LoginMode.Token)
+            return new EmptyResult();
+
+        var response = new LoginResponse(result.Status, result.LockoutEnd);
+
+        if (result.Status == LoginStatus.Succeeded)
+            return Ok(response);
+
+        if (result.Status == LoginStatus.InvalidCredentials)
+            return Unauthorized(response);
+
+        if (result.Status == LoginStatus.EmailNotConfirmed || result.Status == LoginStatus.NotAllowed)
+            return StatusCode(StatusCodes.Status403Forbidden, response);
+
+        if (result.Status == LoginStatus.LockedOut)
+            return StatusCode(StatusCodes.Status423Locked, response);
+
+        if (result.Status == LoginStatus.RequiresTwoFactor)
+            return Unauthorized(response);
+
+        return StatusCode(StatusCodes.Status500InternalServerError);
     }
 
     [AllowAnonymous]
@@ -76,7 +98,7 @@ public sealed class AccountController(IAccountService accountService) : Controll
 
         if (result == SendConfirmationStatus.UserNotFound)
             return StatusCode(StatusCodes.Status404NotFound);
-        
+
         return StatusCode(StatusCodes.Status500InternalServerError);
     }
 }
