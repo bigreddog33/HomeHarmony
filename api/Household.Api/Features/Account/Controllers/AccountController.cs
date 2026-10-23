@@ -46,6 +46,21 @@ public sealed class AccountController(IAccountService accountService) : Controll
     }
 
     [AllowAnonymous]
+    [HttpPost("logout")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
+    public async Task<IActionResult> Logout(
+        [FromBody] LogoutRequest request,
+        CancellationToken cancellationToken)
+    {
+        await accountService.LogoutAsync(cancellationToken);
+
+        return NoContent();
+    }
+
+    [AllowAnonymous]
     [HttpPost("createuser")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -98,6 +113,28 @@ public sealed class AccountController(IAccountService accountService) : Controll
 
         if (result == SendConfirmationStatus.UserNotFound)
             return StatusCode(StatusCodes.Status404NotFound);
+
+        return StatusCode(StatusCodes.Status500InternalServerError);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("refresh")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
+    public async Task<IActionResult> Refresh(
+        RefreshRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await accountService.RefreshAsync(request,cancellationToken);
+
+        if (result == RefreshStatus.Succeeded)
+            return new EmptyResult();
+
+        if (result == RefreshStatus.InvalidRefreshToken)
+            return Unauthorized(new RefreshResponse(result));
 
         return StatusCode(StatusCodes.Status500InternalServerError);
     }

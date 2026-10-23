@@ -2,18 +2,28 @@ using Household.Api.Features.Account.Contracts;
 using Household.Api.Features.Account.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.BearerToken;
+using Microsoft.Extensions.Options;
 
 public class AccountService : IAccountService
 {
     private readonly UserManager<ApplicationIdentityUser> _userManager;
     private readonly SignInManager<ApplicationIdentityUser> _signInManager;
     private readonly ILogger<AccountService> _logger;
+    private readonly IOptionsMonitor<BearerTokenOptions> _bearerTokenOptions;
+    private readonly TimeProvider _timeProvider;
 
-    public AccountService(UserManager<ApplicationIdentityUser> userManager, SignInManager<ApplicationIdentityUser> signInManager, ILogger<AccountService> logger)
+    public AccountService(UserManager<ApplicationIdentityUser> userManager, 
+        SignInManager<ApplicationIdentityUser> signInManager, 
+        ILogger<AccountService> logger,
+        IOptionsMonitor<BearerTokenOptions> bearerTokenOptions,
+        TimeProvider timeProvider)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
+        _bearerTokenOptions = bearerTokenOptions;
+        _timeProvider = timeProvider;
     }
 
     public async Task<LoginResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
@@ -81,6 +91,13 @@ public class AccountService : IAccountService
         return new(LoginStatus.NotAllowed);
     }
 
+    public async Task LogoutAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _signInManager.AuthenticationScheme = IdentityConstants.ApplicationScheme;
+        await _signInManager.SignOutAsync();
+    }
+
     public async Task<CreateUserResult> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -135,5 +152,39 @@ public class AccountService : IAccountService
         //TODO: send using configured email provider
 
         return SendConfirmationStatus.Sent;
+    }
+
+    public async Task<RefreshStatus> RefreshAsync(
+        RefreshRequest request,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+            return RefreshStatus.InvalidRefreshToken;
+
+        var options = _bearerTokenOptions.Get(IdentityConstants.BearerScheme);
+        var ticket = options.RefreshTokenProtector.Unprotect(request.RefreshToken);
+
+        if (ticket is null || !ticket.Properties.ExpiresUtc.HasValue || ticket.Properties.ExpiresUtc.Value <= _timeProvider.GetUtcNow())
+            return RefreshStatus.InvalidRefreshToken;
+
+        var user = await _signInManager.ValidateSecurityStampAsync(ticket.Principal);
+
+        if (user is null)
+            return RefreshStatus.InvalidRefreshToken;
+
+        if (!await _signInManager.CanSignInAsync(user))
+            return RefreshStatus.InvalidRefreshToken;
+
+        if (_userManager.SupportsUserLockout && await _userManager.IsLockedOutAsync(user))
+            return RefreshStatus.InvalidRefreshToken;
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        _signInManager.AuthenticationScheme = IdentityConstants.BearerScheme;
+
+        await _signInManager.SignInAsync(user, isPersistent: false);
+        return RefreshStatus.Succeeded;
     }
 }

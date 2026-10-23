@@ -1,6 +1,8 @@
 using System.Text.Json.Serialization;
 using Household.Api.Features.Account.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.BearerToken;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +27,23 @@ builder.Services
     })
     .AddEntityFrameworkStores<UserIdentityDbContext>();
 
+builder.Services.Configure<BearerTokenOptions>(
+    IdentityConstants.BearerScheme,
+    options =>
+    {
+        options.BearerTokenExpiration = TimeSpan.FromMinutes(15);
+        options.RefreshTokenExpiration = TimeSpan.FromDays(7);
+    });
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.SlidingExpiration = false;
+});
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddControllers()
@@ -47,9 +66,12 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(webClientOrigin)
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
+
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 
 var app = builder.Build();
 
@@ -64,7 +86,13 @@ else
     app.UseHttpsRedirection();
 }
 
+app.UseRouting();
+
 app.UseCors("WebClient");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
 app.Run();
 
