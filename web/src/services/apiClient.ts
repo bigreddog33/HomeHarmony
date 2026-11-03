@@ -32,6 +32,7 @@ export async function postJson(path: string, body: unknown, readResponseBody = f
       `${apiBaseUrl.replace(/\/$/, "")}/${path.replace(/^\//, "")}`,
       {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: serializedBody,
         signal: abortController.signal,
