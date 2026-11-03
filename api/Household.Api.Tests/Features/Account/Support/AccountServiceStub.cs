@@ -5,7 +5,8 @@ namespace Household.Api.Tests.Features.Account.Support;
 
 internal sealed class AccountServiceStub : IAccountService
 {
-    public bool LoginResult { get; set; } = true;
+    public LoginResult LoginResult { get; set; } = new(LoginStatus.Succeeded);
+    public RefreshStatus RefreshResult { get; set; } = RefreshStatus.Succeeded;
     public CreateUserResult CreateResult { get; set; } = new (CreateUserStatus.Created);
     public SendConfirmationStatus ConfirmationResult { get; set; } = SendConfirmationStatus.Sent;
 
@@ -24,10 +25,21 @@ internal sealed class AccountServiceStub : IAccountService
         return ConfirmationResult;
     }
 
-    public async Task<bool> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
+    public async Task<LoginResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
         await RecordCallAsync(request, cancellationToken);
         return LoginResult;
+    }
+
+    public async Task LogoutAsync(CancellationToken cancellationToken)
+    {
+        await RecordCallAsync(new LogoutRequest(), cancellationToken);
+    }
+
+    public async Task<RefreshStatus> RefreshAsync(RefreshRequest request, CancellationToken cancellationToken)
+    {
+        await RecordCallAsync(request, cancellationToken);
+        return RefreshResult;
     }
 
     private async Task RecordCallAsync(object request, CancellationToken cancellationToken)

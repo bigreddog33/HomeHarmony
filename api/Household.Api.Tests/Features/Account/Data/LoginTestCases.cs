@@ -2,6 +2,17 @@ namespace Household.Api.Tests.Features.Account.Data;
 
 public static class LoginTestCases
 {
+    public sealed class InvalidModes : TheoryData<string>
+    {
+        public InvalidModes()
+        {
+            Add("{\"email\":\"user@example.com\",\"password\":\"Password123!\"}");
+            Add("{\"email\":\"user@example.com\",\"password\":\"Password123!\",\"mode\":null}");
+            Add("{\"email\":\"user@example.com\",\"password\":\"Password123!\",\"mode\":\"Unknown\"}");
+            Add("{\"email\":\"user@example.com\",\"password\":\"Password123!\",\"mode\":999}");
+        }
+    }
+
     public sealed class InvalidRequests : TheoryData<string, string>
     {
         public InvalidRequests()

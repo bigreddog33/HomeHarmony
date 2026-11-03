@@ -21,6 +21,7 @@ public sealed class AccountServiceTests : IDisposable
         // No database, HTTP server, or email provider is registered.
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSingleton<TimeProvider>(TimeProvider.System);
         services.AddAuthentication();
         services.AddIdentityCore<ApplicationIdentityUser>().AddSignInManager();
         services.AddScoped<UserManager<ApplicationIdentityUser>, IdentityUserManagerStub>();

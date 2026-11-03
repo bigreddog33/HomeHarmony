@@ -26,12 +26,16 @@ public static class AccountControllerCases
         }
     }
 
-    public sealed class ServiceResults : TheoryData<bool, int>
+    public sealed class LoginResults : TheoryData<LoginStatus, int>
     {
-        public ServiceResults()
+        public LoginResults()
         {
-            Add(true, StatusCodes.Status200OK);
-            Add(false, StatusCodes.Status401Unauthorized);
+            Add(LoginStatus.Succeeded, StatusCodes.Status200OK);
+            Add(LoginStatus.InvalidCredentials, StatusCodes.Status401Unauthorized);
+            Add(LoginStatus.EmailNotConfirmed, StatusCodes.Status403Forbidden);
+            Add(LoginStatus.NotAllowed, StatusCodes.Status403Forbidden);
+            Add(LoginStatus.LockedOut, StatusCodes.Status423Locked);
+            Add(LoginStatus.RequiresTwoFactor, StatusCodes.Status401Unauthorized);
         }
     }
 }

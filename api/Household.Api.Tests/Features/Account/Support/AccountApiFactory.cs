@@ -1,4 +1,6 @@
 using Household.Api.Features.Account.Services;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.AspNetCore.DataProtection.XmlEncryption;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,9 +19,16 @@ internal sealed class AccountApiFactory : WebApplicationFactory<Program>
     {
         // Use the real production error handler without requiring Windows Event Log access.
         builder.UseEnvironment("Production");
-        builder.ConfigureLogging(logging => logging.ClearProviders().AddConsole());
+        builder.ConfigureLogging(logging => logging.ClearProviders().AddConsole()
+            .AddFilter("Microsoft.AspNetCore", LogLevel.Warning));
         builder.ConfigureServices(services =>
         {
+            // Keep test authentication options independent of the developer's persisted keys.
+            services.Configure<KeyManagementOptions>(options =>
+            {
+                options.XmlRepository = new TestKeyRepository();
+                options.XmlEncryptor = new NullXmlEncryptor();
+            });
             services.RemoveAll<IAccountService>();
             services.AddSingleton<IAccountService>(Service);
         });
